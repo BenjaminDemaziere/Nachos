@@ -2,3 +2,6 @@ code/build/*
 code/bin/coff2noff
 code/bin/*.o
 code/bin/.*.d
+.vscode/*
+code/Run
+code/run

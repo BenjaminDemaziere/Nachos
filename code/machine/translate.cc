@@ -253,3 +253,23 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
     DEBUG('a', "phys addr = 0x%x\n", *physAddr);
     return NoException;
 }
+
+
+void Machine::copyStringFromMachine(int from, char *to, unsigned size) {
+    unsigned i = 0;
+	int  c = 1;
+	for(i = 0;i<size-1 && c!='\0' ;i++) {
+		ReadMem(from+i,1,&c); //Lecture de la mémoire de la machine
+		to[i]=c; //Met la valeur récupérer dans le tableau
+	}
+	if(to[i]!='\0')
+		to[i+1]='\0';
+}
+
+void Machine::copyStringToMachine(char * str, int to, int size) {
+	int i =0;
+	while(i<size && str[i]!='\0') {
+		WriteMem(to+i,1,str[i]); //Ecrit dans la mémoire MIPS
+		i++;
+	}
+}
