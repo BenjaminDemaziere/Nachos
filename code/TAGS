@@ -1,0 +1,518 @@
+
+filesys/directory.cc,486
+Directory::Directory(int size)Directory38,1569
+Directory::~Directory()~Directory51,1944
+Directory::FetchFrom(OpenFile *file)FetchFrom64,2277
+Directory::WriteBack(OpenFile *file)WriteBack77,2691
+Directory::FindIndex(const char *name)FindIndex91,3174
+Directory::Find(const char *name)Find109,3760
+Directory::Add(const char *name, int newSector)Add130,4394
+Directory::Remove(const char *name)Remove154,5133
+Directory::List()List170,5528
+Directory::Print()Print184,5943
+
+filesys/filehdr.cc,371
+FileHeader::Allocate(BitMap *freeMap, int fileSize)Allocate42,1678
+FileHeader::Deallocate(BitMap *freeMap)Deallocate62,2287
+FileHeader::FetchFrom(int sector)FetchFrom78,2774
+FileHeader::WriteBack(int sector)WriteBack91,3166
+FileHeader::ByteToSector(int offset)ByteToSector107,3752
+FileHeader::FileLength()FileLength118,4061
+FileHeader::Print()Print130,4402
+
+filesys/filesys.cc,538
+#define FreeMapSector FreeMapSector57,2386
+#define DirectorySector DirectorySector58,2412
+#define FreeMapFileSize FreeMapFileSize63,2634
+#define NumDirEntries NumDirEntries64,2685
+#define DirectoryFileSize DirectoryFileSize65,2712
+FileSystem::FileSystem(bool format)FileSystem80,3347
+FileSystem::Create(const char *name, int initialSize)Create175,6858
+FileSystem::Open(const char *name)Open228,8493
+FileSystem::Remove(const char *name)Remove258,9475
+FileSystem::List()List296,10538
+FileSystem::Print()Print316,11098
+
+filesys/fstest.cc,378
+#define TransferSize TransferSize24,680
+Copy(const char *from, const char *to)Copy32,976
+Print(char *name)Print78,2205
+#define FileName FileName111,3180
+#define Contents Contents112,3209
+#define ContentSize ContentSize113,3240
+#define FileSize FileSize114,3278
+FileWrite()FileWrite117,3338
+FileRead()FileRead145,4040
+PerformanceTest()PerformanceTest173,4752
+
+filesys/openfile.cc,436
+OpenFile::OpenFile(int sector)OpenFile29,1013
+OpenFile::~OpenFile()~OpenFile41,1366
+OpenFile::Seek(int position)Seek55,1770
+OpenFile::Read(char *into, int numBytes)Read74,2446
+OpenFile::Write(const char *into, int numBytes)Write82,2595
+OpenFile::ReadAt(char *into, int numBytes, int position)ReadAt116,4006
+OpenFile::WriteAt(const char *from, int numBytes, int position)WriteAt146,5030
+OpenFile::Length() Length193,6756
+
+filesys/synchdisk.cc,340
+DiskRequestDone (int arg)DiskRequestDone27,1067
+SynchDisk::SynchDisk(const char* name)SynchDisk43,1536
+SynchDisk::~SynchDisk()~SynchDisk56,1976
+SynchDisk::ReadSector(int sectorNumber, char* data)ReadSector73,2450
+SynchDisk::WriteSector(int sectorNumber, char* data)WriteSector91,3054
+SynchDisk::RequestDone()RequestDone106,3544
+
+machine/console.cc,418
+static void ConsoleReadPoll(int c) ConsoleReadPoll21,789
+static void ConsoleWriteDone(int c)ConsoleWriteDone23,889
+Console::Console(char *readFile, char *writeFile, VoidFunctionPtr readAvail, Console39,1595
+Console::~Console()~Console67,2502
+Console::CheckCharAvail()CheckCharAvail87,3164
+Console::WriteDone()WriteDone115,4027
+Console::GetChar()GetChar129,4442
+Console::PutChar(char ch)PutChar144,4807
+
+machine/disk.cc,818
+#define MagicNumber MagicNumber23,908
+#define MagicSize MagicSize24,940
+#define DiskSize DiskSize26,972
+static void DiskDone(int arg) { ((Disk *)arg)->HandleInterrupt(); }DiskDone29,1103
+Disk::Disk(const char* name, VoidFunctionPtr callWhenDone, int callArg)Disk43,1732
+Disk::~Disk()~Disk76,2833
+PrintSector (bool writing, int sector, char *data)PrintSector87,3116
+Disk::ReadRequest(int sectorNumber, char* data)ReadRequest116,4106
+Disk::WriteRequest(int sectorNumber, char* data)WriteRequest136,4710
+Disk::HandleInterrupt ()HandleInterrupt162,5583
+Disk::TimeToSeek(int newSector, int *rotation) TimeToSeek180,6241
+Disk::ModuloDiff(int to, int from)ModuloDiff203,7039
+Disk::ComputeLatency(int newSector, bool writing)ComputeLatency233,8255
+Disk::UpdateLast(int newSector)UpdateLast262,9323
+
+machine/interrupt.cc,931
+static const char *intLevelNames[] = { "off", "on"};intLevelNames29,891
+static const char *intTypeNames[] = { "timer", "disk", "console write", intTypeNames30,944
+PendingInterrupt::PendingInterrupt(VoidFunctionPtr func, int param, long long time, PendingInterrupt44,1597
+Interrupt::Interrupt()Interrupt60,2075
+Interrupt::~Interrupt()~Interrupt74,2468
+Interrupt::ChangeLevel(IntStatus old, IntStatus now)ChangeLevel100,3349
+Interrupt::SetLevel(IntStatus now)SetLevel118,3915
+Interrupt::Enable()Enable139,4585
+Interrupt::OneTick()OneTick154,5019
+Interrupt::YieldOnReturn()YieldOnReturn196,6404
+Interrupt::Idle()Idle214,7002
+Interrupt::Halt()Halt244,8194
+Interrupt::Schedule(VoidFunctionPtr handler, int arg, long long fromNow, IntType type)Schedule268,9026
+Interrupt::CheckIfDue(bool advanceClock)CheckIfDue294,10005
+PrintPending(int arg)PrintPending348,11715
+Interrupt::DumpState()DumpState363,12177
+
+machine/machine.cc,504
+static const char* exceptionNames[] = { "no exception", "syscall", exceptionNames16,504
+void CheckEndian()CheckEndian28,998
+Machine::Machine(bool debug)Machine55,1662
+Machine::~Machine()~Machine83,2375
+Machine::RaiseException(ExceptionType which, int badVAddr)RaiseException101,2952
+void Machine::Debugger()Debugger123,3834
+Machine::DumpState()DumpState170,5007
+int Machine::ReadRegister(int num)ReadRegister208,6104
+void Machine::WriteRegister(int num, int value)WriteRegister214,6221
+
+machine/mipssim.cc,342
+Machine::Run()Run31,1067
+TypeToReg(RegType reg, Instruction *instr)TypeToReg66,2125
+Machine::OneInstruction(Instruction *instr)OneInstruction106,3596
+Machine::DelayedLoad(int nextReg, int nextValue)DelayedLoad632,17271
+Instruction::Decode()Decode646,17729
+Mult(int a, int b, bool signedArith, int* hiPtr, int* loPtr)Mult692,18874
+
+machine/network.cc,418
+static void NetworkReadPoll(int arg)NetworkReadPoll17,557
+static void NetworkSendDone(int arg)NetworkSendDone19,651
+Network::Network(NetworkAddress addr, double reliability,Network26,956
+Network::~Network()~Network50,1732
+Network::CheckPktAvail()CheckPktAvail60,1991
+Network::SendDone()SendDone90,2944
+Network::Send(PacketHeader hdr, char* data)Send103,3318
+Network::Receive(char* data)Receive130,4162
+
+machine/stats.cc,77
+Statistics::Statistics()Statistics19,659
+Statistics::Print()Print34,1155
+
+machine/sysdep.cc,1419
+PollFile(int fd)PollFile115,3871
+OpenForWrite(const char *name)OpenForWrite149,4944
+OpenForReadWrite(const char *name, bool crashOnError)OpenForReadWrite166,5371
+Read(int fd, char *buffer, int nBytes)Read180,5741
+ReadPartial(int fd, char *buffer, int nBytes)ReadPartial193,6102
+WriteFile(int fd, const char *buffer, int nBytes)WriteFile205,6417
+Lseek(int fd, int offset, int whence)Lseek217,6770
+Tell(int fd)Tell229,7095
+Close(int fd)Close245,7467
+Unlink(const char *name)Unlink257,7722
+OpenSocket()OpenSocket270,8135
+CloseSocket(int sockID)CloseSocket286,8462
+InitSocketName(struct sockaddr_un *uname, const char *name)InitSocketName297,8744
+AssignNameToSocket(const char *socketName, int sockID)AssignNameToSocket310,9148
+DeAssignNameToSocket(const char *socketName)DeAssignNameToSocket328,9766
+PollSocket(int sockID)PollSocket339,10092
+ReadFromSocket(int sockID, char *buffer, int packetSize)ReadFromSocket349,10425
+SendToSocket(int sockID, const char *buffer, int packetSize, const char *toName)SendToSocket383,11525
+CallOnUserAbort(VoidNoArgFunctionPtr func)CallOnUserAbort402,12082
+Delay(int seconds)Delay415,12502
+Abort()Abort426,12750
+Exit(int exitCode)Exit437,12969
+RandomInit(unsigned seed)RandomInit449,13310
+Random()Random460,13555
+AllocBoundedArray(int size)AllocBoundedArray478,14094
+DeallocBoundedArray(char *ptr, int size)DeallocBoundedArray497,14659
+
+machine/timer.cc,242
+static void TimerHandler(int arg)TimerHandler27,1033
+Timer::Timer(VoidFunctionPtr timerHandler, int callArg, bool doRandom)Timer44,1773
+Timer::TimerExpired() TimerExpired62,2398
+Timer::TimeOfNextInterrupt() TimeOfNextInterrupt79,2963
+
+machine/translate.cc,517
+WordToHost(unsigned int word) {WordToHost42,1626
+ShortToHost(unsigned short shortword) {ShortToHost56,1959
+WordToMachine(unsigned int word) { return WordToHost(word); }WordToMachine68,2228
+ShortToMachine(unsigned short shortword) { return ShortToHost(shortword); }ShortToMachine71,2306
+Machine::ReadMem(int addr, int size, int *value)ReadMem88,2908
+Machine::WriteMem(int addr, int size, int value)WriteMem138,4235
+Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)Translate187,5800
+
+network/nettest.cc,39
+MailTest(int farAddr)MailTest34,1179
+
+network/post.cc,994
+Mail::Mail(PacketHeader pktH, MailHeader mailH, char *msgData)Mail34,1231
+MailBox::MailBox()MailBox52,1765
+MailBox::~MailBox()~MailBox65,2143
+PrintHeader(PacketHeader pktHdr, MailHeader mailHdr)PrintHeader80,2596
+MailBox::Put(PacketHeader pktHdr, MailHeader mailHdr, char *data)Put100,3322
+MailBox::Get(PacketHeader *pktHdr, MailHeader *mailHdr, char *data) Get122,4097
+static void PostalHelper(int arg)PostalHelper150,5152
+static void ReadAvail(int arg)ReadAvail152,5249
+static void WriteDone(int arg)WriteDone154,5343
+PostOffice::PostOffice(NetworkAddress addr, double reliability, int nBoxes)PostOffice176,6375
+PostOffice::~PostOffice()~PostOffice204,7383
+PostOffice::PostalDelivery()PostalDelivery222,7911
+PostOffice::Send(PacketHeader pktHdr, MailHeader mailHdr, const char* data)Send262,9107
+PostOffice::Receive(int box, PacketHeader *pktHdr, Receive309,10724
+PostOffice::IncomingPacket()IncomingPacket326,11274
+PostOffice::PacketSent()PacketSent342,11750
+
+threads/list.cc,473
+ListElement::ListElement (void *itemPtr, long long sortKey)ListElement30,1136
+List::List ()List43,1561
+List::~List ()~List58,2146
+List::Append (void *item)Append77,2722
+List::Prepend (void *item)Prepend106,3496
+List::Remove ()Remove131,4088
+List::Mapcar (VoidFunctionPtr func)Mapcar147,4601
+List::IsEmpty ()IsEmpty162,5053
+List::SortedInsert (void *item, long long sortKey)SortedInsert186,5826
+List::SortedRemove (long long *keyPtr)SortedRemove232,7111
+
+threads/main.cc,93
+#define MAINMAIN49,1940
+#undef MAINMAIN51,1976
+main (int argc, char **argv)main79,2940
+
+threads/scheduler.cc,279
+Scheduler::Scheduler ()Scheduler30,1175
+Scheduler::~Scheduler ()~Scheduler40,1449
+Scheduler::ReadyToRun (Thread * thread)ReadyToRun54,1859
+Scheduler::FindNextToRun ()FindNextToRun71,2412
+Scheduler::Run (Thread * nextThread)Run91,3142
+Scheduler::Print ()Print150,5209
+
+threads/synch.cc,606
+Semaphore::Semaphore (const char *debugName, int initialValue)Semaphore36,1574
+Semaphore::~Semaphore ()~Semaphore49,1995
+Semaphore::P ()P65,2504
+Semaphore::V ()V89,3310
+Lock::Lock (const char *debugName)Lock104,3798
+Lock::~Lock ()~Lock108,3838
+Lock::Acquire ()Acquire112,3862
+Lock::Release ()Release116,3888
+Condition::Condition (const char *debugName)Condition120,3910
+Condition::~Condition ()~Condition124,3960
+Condition::Wait (Lock * conditionLock)Wait128,3994
+Condition::Signal (Lock * conditionLock)Signal134,4063
+Condition::Broadcast (Lock * conditionLock)Broadcast138,4113
+
+threads/synchlist.cc,223
+SynchList::SynchList ()SynchList25,930
+SynchList::~SynchList ()~SynchList37,1316
+SynchList::Append (void *item)Append54,1788
+SynchList::Remove ()Remove71,2307
+SynchList::Mapcar (VoidFunctionPtr func)Mapcar93,2897
+
+threads/system.cc,741
+Thread *currentThread;		// the thread we are running nowcurrentThread14,448
+Thread *threadToBeDestroyed;	// the thread that just finishedthreadToBeDestroyed15,505
+Scheduler *scheduler;		// the ready listscheduler16,567
+Interrupt *interrupt;		// interrupt statusinterrupt17,608
+Statistics *stats;		// performance metricsstats18,651
+Timer *timer;			// the hardware timer device,timer19,694
+FileSystem *fileSystem;fileSystem23,801
+SynchDisk *synchDisk;synchDisk27,848
+Machine *machine;		// user program memory and registersmachine31,942
+PostOffice *postOffice;postOffice35,1021
+TimerInterruptHandler (int dummy)TimerInterruptHandler61,2063
+Initialize (int argc, char **argv)Initialize78,2773
+Cleanup ()Cleanup180,5317
+
+threads/thread.cc,696
+#define STACK_FENCEPOST STACK_FENCEPOST23,937
+Thread::Thread (const char *threadName)Thread35,1395
+Thread::~Thread ()~Thread63,2310
+Thread::Fork (VoidFunctionPtr func, int arg)Fork93,3411
+Thread::CheckOverflow ()CheckOverflow134,5033
+Thread::Finish ()Finish161,6008
+Thread::Yield ()Yield197,7315
+Thread::Sleep ()Sleep235,8786
+ThreadFinish ()ThreadFinish260,9637
+InterruptEnable ()InterruptEnable265,9699
+SetupThreadState ()SetupThreadState275,9953
+ThreadPrint (int arg)ThreadPrint319,11181
+Thread::StackAllocate (VoidFunctionPtr func, int arg)StackAllocate338,11787
+Thread::SaveUserState ()SaveUserState390,13738
+Thread::RestoreUserState ()RestoreUserState406,14330
+
+threads/threadtest.cc,78
+SimpleThread (int which)SimpleThread25,865
+ThreadTest ()ThreadTest43,1352
+
+threads/utility.cc,262
+static const char *enableFlags = NULL;	// controls which DEBUG messages are printed enableFlags20,671
+DebugInit (const char *flagList)DebugInit34,1189
+DebugIsEnabled (char flag)DebugIsEnabled45,1494
+DEBUG (char flag, const char *format, ...)DEBUG61,1939
+
+userprog/addrspace.cc,302
+SwapHeader (NoffHeader * noffH)SwapHeader33,1287
+AddrSpace::AddrSpace (OpenFile * executable)AddrSpace63,2722
+AddrSpace::~AddrSpace ()~AddrSpace130,5037
+AddrSpace::InitRegisters ()InitRegisters149,5668
+AddrSpace::SaveState ()SaveState180,6688
+AddrSpace::RestoreState ()RestoreState193,7062
+
+userprog/bitmap.cc,402
+BitMap::BitMap (int nitems)BitMap20,750
+BitMap::~BitMap ()~BitMap34,1138
+BitMap::Mark (int which)Mark50,1523
+BitMap::Clear (int which)Clear64,1924
+BitMap::Test (int which)Test78,2331
+BitMap::Find ()Find98,2887
+BitMap::NumClear ()NumClear116,3304
+BitMap::Print ()Print135,3785
+BitMap::FetchFrom (OpenFile * file)FetchFrom154,4283
+BitMap::WriteBack (OpenFile * file)WriteBack167,4674
+
+userprog/exception.cc,93
+UpdatePC ()UpdatePC33,1322
+ExceptionHandler (ExceptionType which)ExceptionHandler68,2438
+
+userprog/progtest.cc,315
+StartProcess (char *filename)StartProcess24,764
+static Console *console;console51,1520
+static Semaphore *readAvail;readAvail52,1545
+static Semaphore *writeDone;writeDone53,1574
+ReadAvail (int arg)ReadAvail61,1842
+WriteDone (int arg)WriteDone66,1899
+ConsoleTest (char *in, char *out)ConsoleTest78,2236
+
+bin/coff2flat.c,275
+#define MAINMAIN15,553
+#undef MAINMAIN17,589
+#define StackSize StackSize31,887
+#define ReadStruct(ReadStruct32,937
+void Read(int fd, char *buf, int nBytes)Read37,1047
+void Write(int fd, char *buf, int nBytes)Write46,1225
+main (int argc, char **argv)main55,1399
+
+bin/coff2noff.c,403
+#define MAINMAIN23,849
+#undef MAINMAIN25,886
+WordToHost(unsigned int word) {WordToHost45,1299
+ShortToHost(unsigned short shortword) {ShortToHost59,1632
+#define ReadStruct(ReadStruct70,1885
+char *noffFileName = NULL;noffFileName72,1940
+void Read(int fd, char *buf, int nBytes)Read75,1999
+void Write(int fd, char *buf, int nBytes)Write85,2207
+int main (int argc, char **argv)main94,2381
+
+bin/d.c,185
+#define NULL	NULL11,270
+int sptr;sptr13,286
+int longdis = 1;longdis14,296
+char *regstrings[] =regstrings19,357
+#define R(R27,594
+dump_ascii(instruction, pc)dump_ascii30,623
+
+bin/disasm.c,1551
+static FILE *fp;fp18,383
+static LDFILE *ldptr;ldptr19,400
+static SCNHDR texthead, rdatahead, datahead, sdatahead, sbsshead, bsshead;texthead20,422
+static SCNHDR texthead, rdatahead, datahead, sdatahead, sbsshead, bsshead;rdatahead20,422
+static SCNHDR texthead, rdatahead, datahead, sdatahead, sbsshead, bsshead;datahead20,422
+static SCNHDR texthead, rdatahead, datahead, sdatahead, sbsshead, bsshead;sdatahead20,422
+static SCNHDR texthead, rdatahead, datahead, sdatahead, sbsshead, bsshead;sbsshead20,422
+static SCNHDR texthead, rdatahead, datahead, sdatahead, sbsshead, bsshead;bsshead20,422
+static char filename[1000] = "a.out";	/* default a.out file */filename22,498
+static char self[256];			/* name of invoking program */self23,561
+char mem[MEMSIZE];		/* main memory. use malloc later */mem25,618
+int TRACE, Traptrace, Regtrace;TRACE26,674
+int TRACE, Traptrace, Regtrace;Traptrace26,674
+int TRACE, Traptrace, Regtrace;Regtrace26,674
+int NROWS=64, ASSOC=1, LINESIZE=4, RAND=0, LRD=0;NROWS27,706
+int NROWS=64, ASSOC=1, LINESIZE=4, RAND=0, LRD=0;ASSOC27,706
+int NROWS=64, ASSOC=1, LINESIZE=4, RAND=0, LRD=0;LINESIZE27,706
+int NROWS=64, ASSOC=1, LINESIZE=4, RAND=0, LRD=0;RAND27,706
+int NROWS=64, ASSOC=1, LINESIZE=4, RAND=0, LRD=0;LRD27,706
+int pc;pc28,756
+main(argc, argv)main32,789
+#define LOADSECTION(LOADSECTION69,1422
+load_section(hd)load_section71,1470
+load_program(filename)load_program88,1870
+int *m_alloc(n)m_alloc140,3282
+disasm(startpc, argc, argv)disasm148,3379
+dis1(xpc)dis1162,3546
+
+bin/execute.c,1570
+#define FAST	FAST14,307
+#define true	true15,322
+#define false	false16,337
+int Reg[32];			/* GPR's */Reg23,427
+int HI, LO;			/* mul/div machine registers */HI24,454
+int HI, LO;			/* mul/div machine registers */LO24,454
+int numjmpls;numjmpls27,535
+int arch1cycles;arch1cycles28,549
+#define  b31(b3131,601
+#define cc_add(cc_add34,708
+#define cc_sub(cc_sub40,857
+#define cc_logic(cc_logic48,1072
+#define cc_mulscc(cc_mulscc54,1149
+runprogram(startpc, argc, argv)runprogram61,1317
+u()				/* unimplemented */u378,8659
+ny()ny383,8740
+RS(i)RS391,8824
+RT(i)RT397,8857
+RD(i)RD403,8890
+IM(i)IM409,8923
+dump_reg()dump_reg417,8961
+ilog2(i)ilog2447,9432
+#define NH NH465,9831
+#define NNN NNN466,9849
+static int hists[NH][NNN];hists468,9869
+int hoflo[NH], htotal[NH];hoflo469,9896
+int hoflo[NH], htotal[NH];htotal469,9896
+void henters(n, hist)henters471,9924
+hprint()hprint478,10048
+int numadds=1, numsubs=1, numsuccesses, numcarries;numadds501,10475
+int numadds=1, numsubs=1, numsuccesses, numcarries;numsubs501,10475
+int numadds=1, numsubs=1, numsuccesses, numcarries;numsuccesses501,10475
+int numadds=1, numsubs=1, numsuccesses, numcarries;numcarries501,10475
+int addtable[33][33];addtable502,10527
+int subtable[33][33];subtable503,10549
+char fmt[] = "%6d";fmt505,10572
+char fmt2[] = "------";fmt2506,10592
+patable(tab)patable508,10617
+printstatistics()printstatistics533,10937
+#define NNNN	NNNN555,11471
+static int hist[NNNN];hist557,11490
+henter(n)henter559,11514
+printhist()printhist566,11579
+
+bin/main.c,1459
+static FILE *fp;fp18,382
+static LDFILE *ldptr;ldptr19,399
+static SCNHDR texthead, rdatahead, datahead, sdatahead, sbsshead, bsshead;texthead20,421
+static SCNHDR texthead, rdatahead, datahead, sdatahead, sbsshead, bsshead;rdatahead20,421
+static SCNHDR texthead, rdatahead, datahead, sdatahead, sbsshead, bsshead;datahead20,421
+static SCNHDR texthead, rdatahead, datahead, sdatahead, sbsshead, bsshead;sdatahead20,421
+static SCNHDR texthead, rdatahead, datahead, sdatahead, sbsshead, bsshead;sbsshead20,421
+static SCNHDR texthead, rdatahead, datahead, sdatahead, sbsshead, bsshead;bsshead20,421
+static char filename[1000] = "a.out";	/* default a.out file */filename22,497
+static char self[256];			/* name of invoking program */self23,560
+char mem[MEMSIZE];		/* main memory. use malloc later */mem25,617
+int TRACE, Traptrace, Regtrace;TRACE26,673
+int TRACE, Traptrace, Regtrace;Traptrace26,673
+int TRACE, Traptrace, Regtrace;Regtrace26,673
+int NROWS=64, ASSOC=1, LINESIZE=4, RAND=0, LRD=0;NROWS27,705
+int NROWS=64, ASSOC=1, LINESIZE=4, RAND=0, LRD=0;ASSOC27,705
+int NROWS=64, ASSOC=1, LINESIZE=4, RAND=0, LRD=0;LINESIZE27,705
+int NROWS=64, ASSOC=1, LINESIZE=4, RAND=0, LRD=0;RAND27,705
+int NROWS=64, ASSOC=1, LINESIZE=4, RAND=0, LRD=0;LRD27,705
+main(argc, argv)main31,780
+char *string(s)string81,1781
+load_program(filename)load_program92,1909
+#define LOADSECTION(LOADSECTION112,2282
+int *m_alloc(n)m_alloc160,3510
+
+bin/opstrings.c,79
+char *normalops[] = {normalops9,231
+char *specialops[] = {specialops76,788
+
+bin/out.c,1190
+#define MAINMAIN7,207
+#undef MAINMAIN9,243
+#define read_struct(read_struct29,649
+#define MAXRELOCS MAXRELOCS31,704
+#define MAXDATA MAXDATA34,729
+struct data {data36,752
+  long data[MAXDATA];data37,766
+  struct reloc reloc[MAXRELOCS];reloc38,788
+  int length;length39,821
+  int relocs;relocs40,835
+#define MAXSCNS MAXSCNS43,853
+#define MAXSYMS MAXSYMS44,872
+#define MAXSSPACE MAXSSPACE45,892
+struct filehdr filehdr;filehdr47,917
+struct aouthdr aouthdr;aouthdr48,941
+struct scnhdr scnhdr[MAXSCNS];scnhdr49,965
+struct data section[MAXSCNS];section50,996
+HDRR symhdr;symhdr51,1026
+EXTR symbols[MAXSYMS];symbols52,1039
+char sspace[20000];sspace53,1062
+char *symbol_type[] = {symbol_type55,1083
+char *storage_class[] = {storage_class60,1269
+main(argc,argv)main66,1540
+static column = 1;column148,3755
+static FILE *outfile = stdout;outfile149,3774
+myprintf(va_alist)myprintf153,3840
+mytab(n)mytab174,4187
+mysetfile(f)mysetfile184,4297
+#define printf printf190,4339
+print_section(i)print_section193,4379
+char *section_name[] = {section_name224,5011
+char *reloc_type[] = {reloc_type229,5135
+print_reloc(vaddr,i,j)print_reloc233,5223
+
+bin/system.c,196
+system_break()system_break19,398
+system_trap()system_trap26,480
+#define	IOCPARM_MASK	IOCPARM_MASK89,1649
+char *u_to_int_addr(ptr)u_to_int_addr125,2367
+u_to_int_fd(fd)u_to_int_fd133,2543
+
+test/halt.c,20
+main ()main16,496
+
+test/matmult.c,122
+#define Dim Dim12,274
+int A[Dim][Dim];A16,367
+int B[Dim][Dim];B17,384
+int C[Dim][Dim];C18,401
+main ()main21,423
+
+test/shell.c,18
+main ()main4,26
+
+test/sort.c,110
+int A[1024];			/* size of physical memory; with code, we'll run out of space! */A12,272
+main ()main15,358
