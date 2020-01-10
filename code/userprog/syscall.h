@@ -148,7 +148,7 @@ char GetChar();
 
 char * GetString();
 
-void PutInt();
+void PutInt(int n);
 
 int GetInt();
 
