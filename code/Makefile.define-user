@@ -76,12 +76,14 @@ USERPROG_LIBS=start.S
 # nachos-"flavor" in the 'build/' directory
 
 # By default, the same flavors as the original ones are compiled
-USER_FLAVORS=$(ORIG_FLAVORS)
+# USER_FLAVORS=$(ORIG_FLAVORS)
 # Once some personnal flavor are defined, this list can be limited
 # to the personal flavors
 # USER_FLAVORS=step2 step5 mynetwork final
+USER_FLAVORS+=step2 threads
 
-# $(eval $(call define-flavor,step2,userprog filesys-stub,synchconsole.cc))
+
+$(eval $(call define-flavor,step2,userprog filesys-stub,synchconsole.cc))
 # $(eval $(call define-flavor,step5,userprog filesys,\
 #     synchconsole.cc userthread.cc))
 # $(eval $(call define-flavor,mynetwork,userprog filesys-stub network, \
