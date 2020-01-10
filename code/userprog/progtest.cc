@@ -83,13 +83,21 @@ ConsoleTest (char *in, char *out)
     readAvail = new Semaphore ("read avail", 0);
     writeDone = new Semaphore ("write done", 0);
 
-    for (;;) {
+    for (;;)
+	{
         readAvail->P ();	// wait for character to arrive
         ch = console->GetChar ();
-        if (ch == 'q' || ch == EOF)
-            return;		// if q, CTRL-D, quit or end of file
-        console->PutChar (ch);	// echo it!
-        writeDone->P ();	// wait for write to finish
-
+		
+        if (ch == 'q' || ch == EOF) // if q, CTRL-D, quit or end of file
+            return;
+        if (ch != '\n')
+		{
+			console->PutChar ('<');
+			writeDone->P ();	// wait for write to finish
+			console->PutChar (ch);
+			writeDone->P ();	// wait for write to finish
+			console->PutChar ('>');
+			writeDone->P ();	// wait for write to finish
+		}
     }
 }
