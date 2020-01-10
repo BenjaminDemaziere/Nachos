@@ -182,6 +182,17 @@ class Machine {
     TranslationEntry *pageTable;
     unsigned int pageTableSize;
 
+
+	/*	(étape 2)
+		Copy a string from MIPS to LINUX
+	*/
+	void copyStringFromMachine( int from, char *to, unsigned size);
+
+	/*	(étape 2)
+		Copy a string from Linux (str) to Machine (to)
+	*/
+	void copyStringToMachine(char * str, int to, int size);
+
   private:
     bool singleStep;		// drop back into the debugger after each
 				// simulated instruction
