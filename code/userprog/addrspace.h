@@ -15,6 +15,10 @@
 
 #include "copyright.h"
 #include "filesys.h"
+#include "bitmap.h"
+#include "list.h"
+
+
 
 #define UserStackSize		1024	// increase this as necessary!
 
@@ -32,11 +36,26 @@ class AddrSpace
     void SaveState ();		// Save/restore address space-specific
     void RestoreState ();	// info on a context switch 
 
+  //Retourne l'adresse du pointeur de pile pour le nouveau thread
+  //Retourne -1 si aucun n'espace est disponible pour la pile 
+    int BeginningStackThread();
+
+
   private:
       TranslationEntry * pageTable;	// Assume linear page table translation
     // for now!
     unsigned int numPages;	// Number of pages in the virtual 
     // address space
+
+
+      int nbThreads; //Nombre de threads utilisateurs créés dans le processus
+    
+      BitMap  * usedPageTable; //BitMap indiquant qu'elle page est occupée
+
+
+
+      List * listThreads; //Liste des threads créés dans le processus
+
 };
 
 #endif // ADDRSPACE_H

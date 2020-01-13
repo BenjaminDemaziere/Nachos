@@ -32,6 +32,9 @@ extern Timer *timer;		// the hardware alarm clock
 #ifdef USER_PROGRAM
 #include "machine.h"
 extern Machine *machine;	// user program memory and registers
+#include "synchconsole.h"
+extern SynchConsole *synchconsole;
+#define MAX_STRING_SIZE 256 //Longueur maximale d'une chaine de caractère
 #endif
 
 #ifdef FILESYS_NEEDED		// FILESYS or FILESYS_STUB

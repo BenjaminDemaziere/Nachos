@@ -9,7 +9,7 @@
 # Depending on your platform, you need to select the correct definition.
 
 # Remove -Werror if this is a too big constraint
-CPPFLAGS+=-Wall -Wshadow -Werror
+CPPFLAGS+=-Wall -Wshadow
 CFLAGS+=-g
 CXXFLAGS+=-g
 

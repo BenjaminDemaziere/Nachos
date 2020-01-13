@@ -24,6 +24,8 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
+#include "userthread.h"
+
 
 //----------------------------------------------------------------------
 // UpdatePC : Increments the Program Counter register in order to resume
@@ -67,20 +69,97 @@ UpdatePC ()
 void
 ExceptionHandler (ExceptionType which)
 {
-    int type = machine->ReadRegister (2);
+    int type = machine->ReadRegister(2);
 
-    if ((which == SyscallException) && (type == SC_Halt))
-      {
-	  DEBUG ('a', "Shutdown, initiated by user program.\n");
-	  interrupt->Halt ();
-      }
-    else
-      {
-	  printf ("Unexpected user mode exception %d %d\n", which, type);
-	  ASSERT (FALSE);
-      }
+    if (which == SyscallException) {
+        switch (type) {
+            case SC_Exit: //Exit correspond à un halt
+            case SC_Halt: {
+                DEBUG('a', "Shutdown, initiated by user program.\n");
+                interrupt->Halt();
+                break;
+            }
+            case SC_PutChar: {
+                DEBUG('a', "PutChar, initiated by user program.\n");
+                char c = (char)machine->ReadRegister(4); //On récupère la valeur passée en argument
+                synchconsole->SynchPutChar(c);
+                break;
+            }
+            case SC_PutString: {
+                DEBUG('a', "PutString, initiated by user program.\n");
+                int adr = machine->ReadRegister(4); //On récupère l'adresse de la chaine
 
-    // LB: Do not forget to increment the pc before returning!
-    UpdatePC ();
-    // End of addition
+                char * buf = new char[MAX_STRING_SIZE];
+
+                machine->copyStringFromMachine(adr,buf,MAX_STRING_SIZE); //Récupère la chaine dans buf
+
+                synchconsole->SynchPutString(buf);
+
+                delete buf; //On supprime le buffer
+                break;
+            }
+
+            case SC_GetChar: {
+                DEBUG('a', "GetChar, initiated by user program.\n");
+                char c = synchconsole->SynchGetChar(); //Récupère le caractère
+                DEBUG('a', "GetChar, returns value %d\n",c);
+                machine->WriteRegister(2, (int)c); //Ecrit la valeur de retour dans le registre 2
+                break;
+            }
+
+            case SC_GetString: {
+                DEBUG('a', "GetString, initiated by user program.\n");
+                int adr = machine->ReadRegister(4); //Pointeur vers la chaine
+                int size = machine->ReadRegister(5); //taille max de la chaine à récupérer
+
+                char * buf = new char[size];
+                synchconsole->SynchGetString(buf,size); //Récupère la chaine
+                DEBUG('a', "GetString, returns value %s\n",buf);
+
+                machine->copyStringToMachine(buf,adr,size); //Ecrit la chaine dans la mémoire (vers le programme utilisateur)
+
+                delete buf;
+                break;
+            }
+
+            case SC_PutInt: {
+                DEBUG('a', "PutInt, initiated by user program.\n");
+                int n = machine->ReadRegister(4); //On récupère la valeur passée en argument
+                synchconsole->SynchPutInt(n);
+                break;
+            }
+
+            case SC_GetInt: {
+                DEBUG('a', "GetInt, initiated by user program.\n");
+                int n = synchconsole->SynchGetInt(); //Récupère un entier
+                machine->WriteRegister(2, n); //Ecrit la valeur de retour dans le registre 2
+                break;
+            }
+
+
+            case SC_UserThreadCreate: {
+                DEBUG('a', "UserThreadCreate, initiated by user program.\n");
+                int f = machine->ReadRegister(4); //Récupère le pointeur vers la fonction et les arguments
+                int args = machine->ReadRegister(5);
+
+                int th = do_UserThreadCreate(f,args);
+
+                machine->WriteRegister(2, th); //Ecrit la valeur de retour dans le registre 2
+
+                break;
+            }
+
+            case SC_UserThreadExit: {
+                DEBUG('a', "UserThreadExit, initiated by user program.\n");
+                do_UserThreadExit();
+                break;
+            }
+
+            default: {
+                printf("Unexpected user mode exception %d %d\n", which, type);
+                ASSERT(FALSE);
+            }
+        }
+        UpdatePC();
+    }
 }

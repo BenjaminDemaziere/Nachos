@@ -29,6 +29,16 @@
 #define SC_Close	8
 #define SC_Fork		9
 #define SC_Yield	10
+#define SC_PutChar  11
+#define SC_PutString 12
+#define SC_GetChar  13
+#define SC_GetString 14
+#define SC_PutInt  15
+#define SC_GetInt 16
+
+#define SC_UserThreadCreate 17
+#define SC_UserThreadExit 18
+
 
 #ifdef IN_USER_MODE
 
@@ -127,6 +137,32 @@ void Fork (void (*func) ());
  * or not. 
  */
 void Yield ();
+
+/* (Etape2) affichage d'un caractère
+*/
+void PutChar(char c);
+
+/* (Etape2) affichage d'une chaine de caractère
+*/
+void PutString(char * c);
+
+
+char GetChar();
+
+
+char * GetString();
+
+void PutInt(int n);
+
+int GetInt();
+
+
+/* (étape 3) création de thread, lance la fonction f avec les arguments args
+*/
+int UserThreadCreate(void f(void *arg), void *arg);
+
+
+void UserThreadExit();
 
 #endif // IN_USER_MODE
 
