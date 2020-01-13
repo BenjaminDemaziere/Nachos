@@ -1,21 +1,21 @@
-#include "userthread.h"
 #include "syscall.h"
-#include "thread.h"
 
-int main() {
-
-  Thread t1 = UserThreadCreate(helloWorld,NULL);
-  Thread t2 = UserThreadCreate(byeWorld,NULL);
-  t1->UserThreadExit();
-  t2->UserThreadExit();
-
-  return 0;
-}
 
 void helloWorld(){
   PutString("Hello World");
+  UserThreadExit();
 }
 
 void byeWorld(){
   PutString("Bye World");
+  UserThreadExit();
+}
+
+int main() {
+
+  int i = UserThreadCreate(helloWorld,0);
+  int d = UserThreadCreate(byeWorld,0);
+
+
+  return 0;
 }

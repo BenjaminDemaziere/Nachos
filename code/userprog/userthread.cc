@@ -50,7 +50,6 @@ static void StartUserThread(int* f){
 
   machine->WriteRegister(4,*args[1]); //On charge l'argument de f dans le registre 4
 
-
-  currentThread->stackTop = currentThread->parent->stackTop - (2 * PageSize);
+  machine->WriteRegister(StackReg,machine->ReadRegister(StackReg) - (2 * PageSize)); // Initialisation du pointeur de pile
   machine->Run(); //On lance l'exécution du programme utilisateur
 }
