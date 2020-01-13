@@ -43,6 +43,7 @@
 #ifdef USER_PROGRAM
 #include "machine.h"
 #include "addrspace.h"
+
 #endif
 
 // CPU register state to be saved on context switch.
@@ -117,6 +118,7 @@ class Thread
     // some of the private data for this class is listed above
 
     int *stack;			// Bottom of the stack
+
     // NULL if this is the main thread
     // (If NULL, don't deallocate stack)
     ThreadStatus status;	// ready, running or blocked
@@ -138,6 +140,9 @@ class Thread
     void RestoreUserState ();	// restore user-level register state
 
     AddrSpace *space;		// User code this thread is running.
+    int childCounter;
+    Thread* parent;
+
 #endif
 };
 

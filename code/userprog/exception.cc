@@ -76,8 +76,11 @@ ExceptionHandler (ExceptionType which)
 
         switch (type) {
             case SC_Exit: //Exit correspond à un halt
+              while(currentThread->childCounter > 0)
+                DEBUG('a', "Waiting for a child to finish.\n");
             case SC_Halt: {
                 DEBUG('a', "Shutdown, initiated by user program.\n");
+
                 interrupt->Halt();
                 break;
             }
@@ -138,19 +141,20 @@ ExceptionHandler (ExceptionType which)
                 break;
             }
             case SC_UserThreadCreate: {
-                do_UserThreadCreate(arg1,arg2);
-            }
-              break;
+                int ret = do_UserThreadCreate(arg1,arg2);
+                if (ret < 0){
+                  //TODO gestion d'erreur de création de thread
+                }
+                break;
             }case SC_UserThreadExit: {
                 do_UserThreadExit();
               break;
             }
-
             default: {
                 printf("Unexpected user mode exception %d %d\n", which, type);
                 ASSERT(FALSE);
             }
+          }
         }
         UpdatePC();
     }
-}
