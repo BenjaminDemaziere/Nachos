@@ -46,8 +46,16 @@ SwapHeader (NoffHeader * noffH)
     noffH->uninitData.inFileAddr = WordToHost (noffH->uninitData.inFileAddr);
 }
 
-
-
+// ReadAtVirtual : Read a portion of a file, starting at "position",
+//   and writes it in the virtual space defined by pageTable, virtualAddr
+//   and numPages
+//  "executable" -- file to read from
+//	"virtualaddr" -- virtual address to write data to
+//	"numBytes" -- the number of bytes to transfer
+//	"position" -- the offset within the file of the first byte to be
+//  "pageTable" -- page table to be used
+//  "numPages" -- number of pages in the page table
+//			read
 static void ReadAtVirtual(OpenFile *executable, int virtualaddr,int numBytes,
                           int position,TranslationEntry *pageTable,unsigned numPages){
     TranslationEntry * tablePageMachine = machine->pageTable;
@@ -123,7 +131,7 @@ AddrSpace::AddrSpace (OpenFile * executable)
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++)
       {
-	  pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
+	  pageTable[i].virtualPage = i;
 	  pageTable[i].physicalPage = frameprovider->GetEmptyFrame();
 	  pageTable[i].valid = TRUE;
 	  pageTable[i].use = FALSE;
