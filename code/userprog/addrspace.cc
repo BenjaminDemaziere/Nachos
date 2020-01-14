@@ -20,6 +20,7 @@
 #include "addrspace.h"
 #include "noff.h"
 
+
 #include <strings.h>		/* for bzero */
 
 //----------------------------------------------------------------------
@@ -82,6 +83,13 @@ AddrSpace::AddrSpace (OpenFile * executable)
     // at least until we have
     // virtual memory
 
+
+    // listThreads = new List;
+    nbThreads = 452;
+
+    /*Création de la bitmap pour la table des pages*/
+    usedPageTable = new BitMap(numPages);
+
     DEBUG ('a', "Initializing address space, num pages %d, size %d\n",
 	   numPages, size);
 // first, set up the translation 
@@ -109,6 +117,15 @@ AddrSpace::AddrSpace (OpenFile * executable)
 		 noffH.code.virtualAddr, noffH.code.size);
 	  executable->ReadAt (&(machine->mainMemory[noffH.code.virtualAddr]),
 			      noffH.code.size, noffH.code.inFileAddr);
+
+        // Les pages pour le code sont occupées
+        int startPage = noffH.code.virtualAddr / PageSize; //The first page of the code
+        int endPage = startPage +  noffH.code.size / PageSize; //The end page of the code
+        for(int p = startPage ; p < endPage ;p++) {
+            usedPageTable->Mark(p);
+        }
+        DEBUG ('a', "BitMap code: %d %d \n", startPage, endPage);
+
       }
     if (noffH.initData.size > 0)
       {
@@ -118,6 +135,15 @@ AddrSpace::AddrSpace (OpenFile * executable)
 			      (machine->mainMemory
 			       [noffH.initData.virtualAddr]),
 			      noffH.initData.size, noffH.initData.inFileAddr);
+
+        // Les pages pour la zone data sont occupées
+        int startPage = noffH.initData.virtualAddr / PageSize; //The first page of the data
+        int endPage = startPage +  noffH.initData.size / PageSize; //The end page of the data
+        for(int p = startPage ; p < endPage ;p++) {
+            usedPageTable->Mark(p);
+        }
+        DEBUG ('a', "BitMap data: %d %d \n", startPage, endPage);
+
       }
 
 }
@@ -195,3 +221,26 @@ AddrSpace::RestoreState ()
     machine->pageTable = pageTable;
     machine->pageTableSize = numPages;
 }
+
+
+int AddrSpace::BeginningStackThread() {
+    int i = 0;
+    while(i<(int)numPages-2 && usedPageTable->Test(i)==1) {
+        i++;
+    }
+    if(i==(int)numPages-2) { //Erreur aucune page de libre
+        DEBUG ('a', "Aucun espace pour allouer une nouvelle pile pour le thread\n");
+        i =-1;
+    }
+    else { //On occupe 3 page pour la pile
+        usedPageTable->Mark(i);
+        usedPageTable->Mark(i+1);
+        usedPageTable->Mark(i+2);
+        i+=2; //Le début de la pile
+    }
+    return i*PageSize;
+}
+
+// void AddrSpace::GetNewIdThread() {
+
+// }
