@@ -15,7 +15,6 @@
 #include "addrspace.h"
 #include "synch.h"
 
-
 //----------------------------------------------------------------------
 // StartProcess
 //      Run a user program.  Open the executable, load it into
@@ -25,22 +24,24 @@
 void
 StartProcess (char *filename)
 {
-  nbprocess++;
-  char * name = (char * )filename;
-    OpenFile *executable = fileSystem->Open (name);
+    nbprocess++;
+    OpenFile *executable = fileSystem->Open (filename);
     AddrSpace *space;
-
     if (executable == NULL)
       {
-	  printf ("Unable to open file %s\n", name);
+	  printf ("Unable to open file %s\n", filename);
 	  return;
       }
+
     space = new AddrSpace (executable);
     currentThread->space = space;
 
     delete executable;		// close file
+
     space->InitRegisters ();	// set the initial register values
     space->RestoreState ();	// load page table register
+
+
     machine->Run ();		// jump to the user progam
     ASSERT (FALSE);		// machine->Run never returns;
     // the address space exits

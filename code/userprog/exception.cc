@@ -70,13 +70,16 @@ UpdatePC ()
 //      are in machine.h.
 //----------------------------------------------------------------------
 
+
+Semaphore *mutex= new Semaphore("mutex",1);
+Semaphore *attente= new Semaphore("attente",0);
+int nbAtt=0;
+
 void
 ExceptionHandler (ExceptionType which)
 {
     int type = machine->ReadRegister(2);
-    Semaphore *mutex= new Semaphore("mutex",1);
-    Semaphore *attente= new Semaphore("attente",0);
-    int nbAtt=0;
+
     if (which == SyscallException) {
         switch (type) {
             case SC_Exit: //Exit correspond à un halt
@@ -175,10 +178,14 @@ ExceptionHandler (ExceptionType which)
                 break;
             }
             case SC_ForkExec: {
+
               int s =machine->ReadRegister(4);
-              Thread *newThread = new Thread("forkerSYS");//Création de thread système
-              newThread->Fork((VoidFunctionPtr)StartProcess,s);//Lancement du nouveau programme dans ce thread
-              machine->WriteRegister(2, 0);
+              char * buf= new char[MAX_STRING_SIZE];
+              machine->copyStringFromMachine(s,buf,MAX_STRING_SIZE);//Récupération de la string
+              Thread *newThread = new Thread("Thread système");//Création de thread système
+              newThread->Fork((VoidFunctionPtr)StartProcess,(int)buf);//Lancement du nouveau programme dans ce thread
+              machine->WriteRegister(2, 0); // On écrit la valeur de retour
+              currentThread->Yield();
               break;
             }
 

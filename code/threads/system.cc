@@ -31,7 +31,7 @@ SynchDisk *synchDisk;
 #ifdef USER_PROGRAM		// requires either FILESYS or FILESYS_STUB
 Machine *machine;		// user program memory and registers
 SynchConsole *synchconsole; //La console synchrone (étape 2)
-FrameProvider *frameprovider;
+FrameProvider *frameprovider; //Allocateur de pages physiques(étape 4)
 #endif
 
 #ifdef NETWORK
@@ -83,7 +83,7 @@ Initialize (int argc, char **argv)
     int argCount;
     const char *debugArgs = "";
     bool randomYield = FALSE;
-    nbprocess=0;
+
 #ifdef USER_PROGRAM
     bool debugUserProg = FALSE;	// single step user program
 #endif
@@ -145,7 +145,7 @@ Initialize (int argc, char **argv)
     interrupt = new Interrupt;	// start up interrupt handling
     scheduler = new Scheduler ();	// initialize the ready queue
     if (randomYield)		// start the timer (if needed)
-	  timer = new Timer (TimerInterruptHandler, 0, randomYield);
+	timer = new Timer (TimerInterruptHandler, 0, randomYield);
 
     threadToBeDestroyed = NULL;
 
@@ -157,11 +157,11 @@ Initialize (int argc, char **argv)
 
     interrupt->Enable ();
     CallOnUserAbort (Cleanup);	// if user hits ctl-C
-
+    nbprocess = 0;
 #ifdef USER_PROGRAM
     machine = new Machine (debugUserProg);	// this must come first
-	  synchconsole = new SynchConsole(NULL,NULL);
-    frameprovider = new FrameProvider();
+	synchconsole = new SynchConsole(NULL,NULL);
+  frameprovider = new FrameProvider;
 #endif
 
 #ifdef FILESYS
