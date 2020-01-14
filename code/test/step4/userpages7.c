@@ -1,16 +1,15 @@
 #include "syscall.h"
-#define THIS "110 "
-#define THAT "111 "
-#define THOS "112 "
-#define THUS "113 "
-#define THES "114 "
+#define THIS "770 "
+#define THAT "771 "
+#define THOS "772 "
+#define THUS "773 "
+#define THES "774 "
 const int N = 10; // Choose it large enough!
 
 void f(void *s){
   int i;
   for (i = 0; i < N; i++)
     PutString((char*)s);
-
 }
 main(){
   int i;
