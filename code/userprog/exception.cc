@@ -155,6 +155,13 @@ ExceptionHandler (ExceptionType which)
                 break;
             }
 
+            case SC_UserThreadJoin: {
+                DEBUG('a', "UserThreadJoin, initiated by user program.\n");
+                int idT = machine->ReadRegister(4);;
+                do_UserThreadJoin(idT);
+                break;
+            }
+
             default: {
                 printf("Unexpected user mode exception %d %d\n", which, type);
                 ASSERT(FALSE);
