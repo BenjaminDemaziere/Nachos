@@ -24,6 +24,7 @@
 //    -s causes user programs to be executed in single-step mode
 //    -x runs a user program
 //    -c tests the console
+//    -sc tests the synchconsole
 //
 //  FILESYS
 //    -f causes the physical disk to be formatted
@@ -58,7 +59,8 @@
 
 extern void ThreadTest (void), Copy (const char *unixFile, const char *nachosFile);
 extern void Print (char *file), PerformanceTest (void);
-extern void StartProcess (char *file), ConsoleTest (char *in, char *out);
+extern void StartProcess (char *file);
+extern void ConsoleTest (char *in, char *out), SynchConsoleTest (char *in, char *out);
 extern void MailTest (int networkID);
 
 //----------------------------------------------------------------------
@@ -82,6 +84,7 @@ main (int argc, char **argv)
     // for a particular command
 
     DEBUG ('t', "Entering main");
+	
     (void) Initialize (argc, argv);
 
 #if defined(THREADS) && !defined(NETWORK)
@@ -91,6 +94,7 @@ main (int argc, char **argv)
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount)
       {
 	  argCount = 1;
+	  	  
 	  if (!strcmp (*argv, "-z"))	// print copyright
 	      printf ("%s", copyright);
 #ifdef USER_PROGRAM
@@ -108,6 +112,20 @@ main (int argc, char **argv)
 		  {
 		      ASSERT (argc > 2);
 		      ConsoleTest (*(argv + 1), *(argv + 2));
+		      argCount = 3;
+		  }
+		interrupt->Halt ();	// once we start the console, then 
+		// Nachos will loop forever waiting 
+		// for console input
+	    }
+	  else if (!strcmp (*argv, "-sc"))
+	    {			// test the synchconsole
+		if (argc == 1)
+		    SynchConsoleTest (NULL, NULL);
+		else
+		  {
+		      ASSERT (argc > 2);
+		      SynchConsoleTest (*(argv + 1), *(argv + 2));
 		      argCount = 3;
 		  }
 		interrupt->Halt ();	// once we start the console, then 

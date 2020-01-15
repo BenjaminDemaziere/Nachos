@@ -61,7 +61,7 @@ class List
     void *SortedRemove (long long *keyPtr);	// Remove first item from list
 
   private:
-      ListElement * first;	// Head of the list, NULL if list is empty
+    ListElement *first;	// Head of the list, NULL if list is empty
     ListElement *last;		// Last element of list
 };
 

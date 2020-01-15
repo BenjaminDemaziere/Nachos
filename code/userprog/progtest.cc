@@ -11,6 +11,7 @@
 #include "copyright.h"
 #include "system.h"
 #include "console.h"
+#include "synchconsole.h"
 #include "addrspace.h"
 #include "synch.h"
 
@@ -100,4 +101,31 @@ ConsoleTest (char *in, char *out)
 			writeDone->P ();	// wait for write to finish
 		}
     }
+}
+
+void
+SynchConsoleTest (char *in, char *out)
+{
+	char ch;
+	bool exit = FALSE;
+	// le synchconsole est maintenant définie en global
+	// SynchConsole *synchconsole = new SynchConsole(in, out);
+	
+	do
+	{
+		ch = synchconsole->SynchGetChar();
+		if (ch == 'q' || ch == EOF) // if q, CTRL-D, quit or end of file
+			exit = TRUE;
+		else if (ch != '\n')
+		{
+			synchconsole->SynchPutChar('<');
+			synchconsole->SynchPutChar(ch);
+			synchconsole->SynchPutChar('>');
+			synchconsole->SynchPutChar('\n');
+		}
+	}
+	while (!exit);
+	
+	if (ch == EOF)
+		fprintf(stderr, "Solaris: EOF detected in SynchConsole!\n");
 }

@@ -29,6 +29,7 @@ SynchDisk *synchDisk;
 
 #ifdef USER_PROGRAM		// requires either FILESYS or FILESYS_STUB
 Machine *machine;		// user program memory and registers
+SynchConsole *synchconsole;
 #endif
 
 #ifdef NETWORK
@@ -61,7 +62,7 @@ static void
 TimerInterruptHandler (int dummy)
 {
     if (interrupt->getStatus () != IdleMode)
-	interrupt->YieldOnReturn ();
+		interrupt->YieldOnReturn ();
 }
 
 //----------------------------------------------------------------------
@@ -157,6 +158,7 @@ Initialize (int argc, char **argv)
 
 #ifdef USER_PROGRAM
     machine = new Machine (debugUserProg);	// this must come first
+	synchconsole = new SynchConsole (NULL, NULL);
 #endif
 
 #ifdef FILESYS
@@ -186,6 +188,7 @@ Cleanup ()
 
 #ifdef USER_PROGRAM
     delete machine;
+	delete synchconsole;
 #endif
 
 #ifdef FILESYS_NEEDED

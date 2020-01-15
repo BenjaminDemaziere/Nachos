@@ -29,6 +29,10 @@
 #define SC_Close	8
 #define SC_Fork		9
 #define SC_Yield	10
+#define SC_PutChar	30
+#define SC_GetChar	31
+#define SC_PutString	32
+#define SC_GetString	33
 
 #ifdef IN_USER_MODE
 
@@ -127,6 +131,9 @@ void Fork (void (*func) ());
  * or not. 
  */
 void Yield ();
+
+
+void PutChar (char ch);
 
 #endif // IN_USER_MODE
 

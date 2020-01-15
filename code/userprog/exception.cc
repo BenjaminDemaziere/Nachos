@@ -32,12 +32,12 @@
 static void
 UpdatePC ()
 {
-    int pc = machine->ReadRegister (PCReg);
-    machine->WriteRegister (PrevPCReg, pc);
-    pc = machine->ReadRegister (NextPCReg);
-    machine->WriteRegister (PCReg, pc);
-    pc += 4;
-    machine->WriteRegister (NextPCReg, pc);
+		int pc = machine->ReadRegister (PCReg);
+		machine->WriteRegister (PrevPCReg, pc);
+		pc = machine->ReadRegister (NextPCReg);
+		machine->WriteRegister (PCReg, pc);
+		pc += 4;
+		machine->WriteRegister (NextPCReg, pc);
 }
 
 
@@ -67,20 +67,46 @@ UpdatePC ()
 void
 ExceptionHandler (ExceptionType which)
 {
-    int type = machine->ReadRegister (2);
+	int type = machine->ReadRegister (2);
 
-    if ((which == SyscallException) && (type == SC_Halt))
-      {
-	  DEBUG ('a', "Shutdown, initiated by user program.\n");
-	  interrupt->Halt ();
-      }
-    else
-      {
-	  printf ("Unexpected user mode exception %d %d\n", which, type);
-	  ASSERT (FALSE);
-      }
+	if (which == SyscallException)
+	{
+		switch (type)
+		{
+			case SC_Halt:
+			{
+				DEBUG('a', "Shutdown, initiated by user program.\n");
+				interrupt->Halt();
+				break;
+			}
+			case SC_PutChar:
+			{
+				synchconsole->SynchPutChar ((char) machine->ReadRegister (4));
+				break;
+			}
+			case SC_GetChar:
+			{
+				machine->WriteRegister (2, (int) synchconsole->SynchGetChar());
+				break;
+			}
+			case SC_PutString:
+			{
+				synchconsole->SynchPutString ((char *) machine->ReadRegister (4));
+				break;
+			}
+			case SC_GetString:
+			{
+				synchconsole->SynchGetString ((char *) machine->ReadRegister (4), machine->ReadRegister (5));
+				// machine->WriteRegister (2, );
+				break;
+			}
+			default:
+			{
+				printf("Unexpected user mode exception %d %d\n", which, type);
+				ASSERT(FALSE);
+			}
+		}
 
-    // LB: Do not forget to increment the pc before returning!
-    UpdatePC ();
-    // End of addition
+		UpdatePC();
+	}
 }
