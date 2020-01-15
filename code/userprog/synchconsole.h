@@ -4,6 +4,8 @@
 #include "copyright.h"
 #include "utility.h"
 #include "console.h"
+#include "synch.h"
+
 
 /*
 Etape 2:
@@ -27,5 +29,9 @@ class SynchConsole {
     
     private:
     Console *console;
+
+    //Protège les appels à la console pour qu'un thread à la fois y est accés
+    Semaphore * semaphoreGet;
+    Semaphore * semaphorePut;
 };
 #endif // SYNCHCONSOLE_H
