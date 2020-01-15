@@ -1,9 +1,6 @@
-
-
 /*
 Partie 3
 test des threads
-
 */
 
 
