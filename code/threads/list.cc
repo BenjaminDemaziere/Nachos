@@ -134,6 +134,57 @@ List::Remove ()
 }
 
 //----------------------------------------------------------------------
+// List::RemoveElement
+//      Enlève le premier élément passé en paramètre pour le quel la fonction compare renvoie 1
+//      La fonction compare prend deux élément en paramètre et doit renvoyer 1 s'ils sont égaux
+// 
+// Returns:
+//      Renvoie NULL s'il n'a pas pus supprimer l'élément, ou renvoie l'élément supprimer s'il a réussi
+//----------------------------------------------------------------------
+void * List::RemoveElement (void * element, int (*compare)(void*,void*) ) {
+  ListElement* listElement = first;
+  ListElement* precListElement = NULL;
+  void * suppr = NULL;
+  while(listElement!=NULL && compare(element, listElement->item)==0) {
+    precListElement = listElement;
+    listElement = listElement->next;
+  }
+  if(listElement!=NULL) {
+    if(precListElement==NULL) { //Si l'élément à supprimer est le premier de la liste
+      first = listElement->next;
+    }
+    else if(listElement->next==NULL) { //Si l'élément à supprimer est le dernier de la liste
+      precListElement->next = listElement->next;
+      last = precListElement;
+    }
+    else {
+      precListElement->next = listElement->next;
+    }
+    suppr = listElement->item;
+    delete listElement;
+  }
+  return suppr;
+}
+
+//----------------------------------------------------------------------
+// List::IsPresent
+//
+// Returns: NULL si element n'est pas présent ou l'élément si compare renvoie 1
+//----------------------------------------------------------------------
+void * List::IsPresent(void * element,  int (*compare)(void*,void*)) {
+  void  *e = NULL;
+  ListElement* listElement = first;
+  while(listElement!=NULL && compare(element, listElement->item)==0) {
+    listElement = listElement->next;
+  }
+  if(listElement!=NULL) { //L'élément est présent
+    e = listElement;
+  }
+  return e;
+}
+
+
+//----------------------------------------------------------------------
 // List::Mapcar
 //      Apply a function to each item on the list, by walking through  
 //      the list, one element at a time.
