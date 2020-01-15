@@ -104,7 +104,7 @@ AddrSpace::AddrSpace (OpenFile * executable)
     numPages = divRoundUp (size, PageSize);
     size = numPages * PageSize;
 
-    ASSERT (numPages <= NumPhysPages);	// check we're not trying
+    ASSERT (numPages <= frameprovider->NumAvailFrame());	// check we're not trying
     // to run anything too big --
     // at least until we have
     // virtual memory
@@ -119,11 +119,12 @@ AddrSpace::AddrSpace (OpenFile * executable)
     DEBUG ('a', "Initializing address space, num pages %d, size %d\n",
 	   numPages, size);
 // first, set up the translation
+
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++)
       {
 	  pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
-	  pageTable[i].physicalPage = i+1;
+	  pageTable[i].physicalPage = frameprovider->GetEmptyFrame();
 	  pageTable[i].valid = TRUE;
 	  pageTable[i].use = FALSE;
 	  pageTable[i].dirty = FALSE;
@@ -134,15 +135,16 @@ AddrSpace::AddrSpace (OpenFile * executable)
 
 // zero out the entire address space, to zero the unitialized data segment
 // and the stack segment
-    bzero (machine->mainMemory, size);
+    //bzero (machine->mainMemory, size);
 
 // then, copy in the code and data segments into memory
     if (noffH.code.size > 0)
       {
 	  DEBUG ('a', "Initializing code segment, at 0x%x, size %d\n",
 		 noffH.code.virtualAddr, noffH.code.size);
-	  executable->ReadAt (&(machine->mainMemory[noffH.code.virtualAddr]),
-			      noffH.code.size, noffH.code.inFileAddr);
+     ReadAtVirtual(executable,noffH.code.virtualAddr,noffH.code.size,noffH.code.inFileAddr,pageTable,numPages);
+	 /*executable->ReadAt (&(machine->mainMemory[noffH.code.virtualAddr]),
+			      noffH.code.size, noffH.code.inFileAddr);*/
 
         // Les pages pour le code sont occupées
         int startPage = noffH.code.virtualAddr / PageSize; //The first page of the code
@@ -184,6 +186,10 @@ AddrSpace::~AddrSpace ()
 {
   // LB: Missing [] for delete
   // delete pageTable;
+  int i =0;
+  for(i ; i < numPages ; i++){
+    frameprovider->ReleaseFrame(pageTable[i].physicalPage);
+  }
   delete [] pageTable;
   // End of modification
 }
