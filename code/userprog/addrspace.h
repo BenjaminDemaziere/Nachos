@@ -19,8 +19,14 @@
 #include "list.h"
 
 
+#define UserStackSize		2048	// increase this as necessary!
 
-#define UserStackSize		1024	// increase this as necessary!
+
+
+/*Indique que ces classes existent car on ne peut pas importer leur .h*/
+class Semaphore;
+class Thread;
+
 
 class AddrSpace
 {
@@ -38,7 +44,18 @@ class AddrSpace
 
   //Retourne l'adresse du pointeur de pile pour le nouveau thread
   //Retourne -1 si aucun n'espace est disponible pour la pile 
-    int BeginningStackThread();
+  //Effet collatéral: Alloue 3 pages pour la pile, incrémente le nombre de threads, et ajout le thread à la liste
+    int BeginningStackThread(Thread * t);
+
+  //Désalloue la place sur la pile et enlève de la liste le thread idT, décrémente le nombre de threads
+  //Renvoie 1 si la désallocation s'est bien passé, 0 sinon
+    int ClearThread(Thread * t);
+
+  //Return the number of user threads in this addrspace
+    int getNumberThreads();
+
+    //Return a new id for the thread
+    int NewIdThread();
 
 
   private:
@@ -47,14 +64,16 @@ class AddrSpace
     unsigned int numPages;	// Number of pages in the virtual 
     // address space
 
-
       int nbThreads; //Nombre de threads utilisateurs créés dans le processus
     
       BitMap  * usedPageTable; //BitMap indiquant qu'elle page est occupée
 
-
-
       List * listThreads; //Liste des threads créés dans le processus
+
+      unsigned int uniqueIdT; //Nombre pour créer des id uniques pour les threads
+
+      //On protège méthodes qui sont peuvent être accédés par plusieurs threads
+      Semaphore * semAddrspace;
 
 };
 

@@ -106,6 +106,8 @@ Thread::Fork (VoidFunctionPtr func, int arg)
     
     // LB: Observe that currentThread->space may be NULL at that time.
     this->space = currentThread->space;
+    this->idT = 0; //Thread main
+
 
 #endif // USER_PROGRAM
 

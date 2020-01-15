@@ -138,6 +138,10 @@ class Thread
     void RestoreUserState ();	// restore user-level register state
 
     AddrSpace *space;		// User code this thread is running.
+
+    int idT; //The id of the thread
+    int spaceStack; //The beginning of the stack on the addrspace
+
 #endif
 };
 

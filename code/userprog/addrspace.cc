@@ -84,8 +84,10 @@ AddrSpace::AddrSpace (OpenFile * executable)
     // virtual memory
 
 
-    // listThreads = new List;
-    nbThreads = 452;
+    listThreads = new List;
+    nbThreads = 0; //Nombre de thread utilisateur actif
+    uniqueIdT = 0;
+    semAddrspace = new Semaphore("semAddrspace",1);
 
     /*Création de la bitmap pour la table des pages*/
     usedPageTable = new BitMap(numPages);
@@ -222,25 +224,61 @@ AddrSpace::RestoreState ()
     machine->pageTableSize = numPages;
 }
 
-
-int AddrSpace::BeginningStackThread() {
-    int i = 0;
-    while(i<(int)numPages-2 && usedPageTable->Test(i)==1) {
-        i++;
-    }
-    if(i==(int)numPages-2) { //Erreur aucune page de libre
-        DEBUG ('a', "Aucun espace pour allouer une nouvelle pile pour le thread\n");
-        i =-1;
-    }
-    else { //On occupe 3 page pour la pile
-        usedPageTable->Mark(i);
-        usedPageTable->Mark(i+1);
-        usedPageTable->Mark(i+2);
-        i+=2; //Le début de la pile
-    }
-    return i*PageSize;
+int AddrSpace::NewIdThread() {
+    semAddrspace->P();
+    uniqueIdT++;
+    semAddrspace->V();
+    return uniqueIdT;
 }
 
-// void AddrSpace::GetNewIdThread() {
+int AddrSpace::BeginningStackThread(Thread * t) {
+    semAddrspace->P();
+    int numP = 0;
+    while(numP<(int)numPages-2 && usedPageTable->Test(numP)==1) {
+        numP++;
+    }
+    if(numP==(int)numPages-2) { //Erreur aucune page de libre
+        DEBUG ('a', "Aucun espace pour allouer une nouvelle pile pour le thread\n");
+        return -1;
+    }
+    else { //On occupe 3 page pour la pile
+        usedPageTable->Mark(numP);
+        usedPageTable->Mark(numP+1);
+        usedPageTable->Mark(numP+2);
+        numP+=2; //Le début de la pile
 
-// }
+        //Met dans la liste le thread
+        nbThreads++;
+        listThreads->Append(t);
+    }
+    semAddrspace->V();
+    return numP*PageSize;
+}
+
+/*
+    Fonction utilisée pour listThread->RemoveElement()
+*/
+int compareThread(void *a,void *b) {
+    int cmp = 0;
+    Thread *t1 = (Thread *)a;
+    Thread *t2 = (Thread *)b;
+    if(t1->idT==t2->idT) {
+        cmp =1;
+    }
+    return cmp;
+}
+
+int AddrSpace::ClearThread(Thread * t) {
+    semAddrspace->P();
+    int succ=0;
+    Thread * th = (Thread *) listThreads->RemoveElement((void *)(t), compareThread);
+    if(th!=NULL) { //Le thread a bien été supprimé de la liste
+        succ = 1;
+        int idT = (t->spaceStack)/PageSize;
+        usedPageTable->Clear(idT);
+        usedPageTable->Clear(idT-1);
+        usedPageTable->Clear(idT-2);
+    }
+    semAddrspace->V();
+    return succ;
+}
