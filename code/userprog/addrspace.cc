@@ -85,9 +85,10 @@ AddrSpace::AddrSpace (OpenFile * executable)
 
 
     listThreads = new List;
-    nbThreads = 0; //Nombre de thread utilisateur actif
+    nbThreads = 1; //Nombre de thread actif (1 car il y a le thread main)
     uniqueIdT = 0;
     semAddrspace = new Semaphore("semAddrspace",1);
+    semaphoreEnd = new Semaphore("semaphoreEnd",0);
 
     /*Création de la bitmap pour la table des pages*/
     usedPageTable = new BitMap(numPages);
@@ -192,6 +193,11 @@ AddrSpace::InitRegisters ()
     // allocated the stack; but subtract off a bit, to make sure we don't
     // accidentally reference off the end!
     machine->WriteRegister (StackReg, numPages * PageSize - 16);
+
+    // usedPageTable->Mark(numPages-1); //Indique que les pages sont réservées
+    // usedPageTable->Mark(numPages-2);
+    // usedPageTable->Mark(numPages-3);
+
     DEBUG ('a', "Initializing stack register to %d\n",
 	   numPages * PageSize - 16);
 }
@@ -231,10 +237,11 @@ int AddrSpace::NewIdThread() {
     return uniqueIdT;
 }
 
-int AddrSpace::BeginningStackThread(Thread * t) {
+int AddrSpace::BeginningStackThread(Thread * thread) {
     semAddrspace->P();
     int numP = 0;
-    while(numP<(int)numPages-2 && usedPageTable->Test(numP)==1) {
+    //Cherche 3 pages consécutives libres
+    while(numP<(int)numPages-2 && (usedPageTable->Test(numP)==1 || usedPageTable->Test(numP+1)==1 || usedPageTable->Test(numP+2)==1)) {
         numP++;
     }
     if(numP==(int)numPages-2) { //Erreur aucune page de libre
@@ -249,10 +256,10 @@ int AddrSpace::BeginningStackThread(Thread * t) {
 
         //Met dans la liste le thread
         nbThreads++;
-        listThreads->Append(t);
+        listThreads->Append(thread);
     }
     semAddrspace->V();
-    return numP*PageSize;
+    return (numP+1)*PageSize-16;
 }
 
 /*
@@ -273,11 +280,15 @@ int AddrSpace::ClearThread(Thread * t) {
     int succ=0;
     Thread * th = (Thread *) listThreads->RemoveElement((void *)(t), compareThread);
     if(th!=NULL) { //Le thread a bien été supprimé de la liste
+        nbThreads--;
         succ = 1;
         int idT = (t->spaceStack)/PageSize;
         usedPageTable->Clear(idT);
         usedPageTable->Clear(idT-1);
         usedPageTable->Clear(idT-2);
+        if(nbThreads==1) { //S'il n'y a plus de threads 
+            semaphoreEnd->V(); //Le programme peut se terminer
+        }
     }
     semAddrspace->V();
     return succ;

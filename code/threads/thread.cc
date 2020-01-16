@@ -40,6 +40,7 @@ Thread::Thread (const char *threadName)
     status = JUST_CREATED;
 #ifdef USER_PROGRAM
     space = NULL;
+    idT = 0;
     // FBT: Need to initialize special registers of simulator to 0
     // in particular LoadReg or it could crash when switching
     // user threads.
@@ -67,6 +68,12 @@ Thread::~Thread ()
     ASSERT (this != currentThread);
     if (stack != NULL)
 	DeallocBoundedArray ((char *) stack, StackSize * sizeof (int));
+
+#ifdef USER_PROGRAM
+    if(listSemaphoreJoin!=NULL)
+        delete listSemaphoreJoin;
+#endif // USER_PROGRAM
+
 }
 
 //----------------------------------------------------------------------
@@ -106,8 +113,8 @@ Thread::Fork (VoidFunctionPtr func, int arg)
     
     // LB: Observe that currentThread->space may be NULL at that time.
     this->space = currentThread->space;
-    this->idT = 0; //Thread main
 
+    listSemaphoreJoin = new List;
 
 #endif // USER_PROGRAM
 

@@ -73,7 +73,16 @@ ExceptionHandler (ExceptionType which)
 
     if (which == SyscallException) {
         switch (type) {
-            case SC_Exit: //Exit correspond à un halt
+            case SC_Exit: {
+                DEBUG('a', "Exit, initiated by user program.\n");
+                if(currentThread->idT==0) {//thread Main
+                    while(currentThread->space->nbThreads>1) {
+                        currentThread->space->semaphoreEnd->P(); //Attend que tout les threads se terminent
+                    }
+                }
+                interrupt->Halt(); //A changer qd il y a plusieurs processus
+                break;
+            }
             case SC_Halt: {
                 DEBUG('a', "Shutdown, initiated by user program.\n");
                 interrupt->Halt();
@@ -157,7 +166,7 @@ ExceptionHandler (ExceptionType which)
 
             case SC_UserThreadJoin: {
                 DEBUG('a', "UserThreadJoin, initiated by user program.\n");
-                int idT = machine->ReadRegister(4);;
+                int idT = machine->ReadRegister(4);
                 do_UserThreadJoin(idT);
                 break;
             }

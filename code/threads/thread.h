@@ -142,6 +142,8 @@ class Thread
     int idT; //The id of the thread
     int spaceStack; //The beginning of the stack on the addrspace
 
+    List * listSemaphoreJoin; //List of semaphore for the join syscall
+
 #endif
 };
 

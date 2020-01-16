@@ -57,6 +57,13 @@ class AddrSpace
     //Return a new id for the thread
     int NewIdThread();
 
+    List * listThreads; //Liste des threads créés dans le processus
+
+    //Sémaphore qui permet d'attendre la terminaison de tous les threads
+    Semaphore * semaphoreEnd;
+
+    int nbThreads; //Nombre de threads utilisateurs créés dans le processus
+
 
   private:
       TranslationEntry * pageTable;	// Assume linear page table translation
@@ -64,15 +71,13 @@ class AddrSpace
     unsigned int numPages;	// Number of pages in the virtual 
     // address space
 
-      int nbThreads; //Nombre de threads utilisateurs créés dans le processus
     
       BitMap  * usedPageTable; //BitMap indiquant qu'elle page est occupée
 
-      List * listThreads; //Liste des threads créés dans le processus
 
       unsigned int uniqueIdT; //Nombre pour créer des id uniques pour les threads
 
-      //On protège méthodes qui sont peuvent être accédés par plusieurs threads
+      //On protège les méthodes qui peuvent être accédés par plusieurs threads
       Semaphore * semAddrspace;
 
 };
