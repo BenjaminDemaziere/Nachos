@@ -136,7 +136,8 @@ List::Remove ()
 //----------------------------------------------------------------------
 // List::RemoveElement
 //      Enlève le premier élément passé en paramètre pour le quel la fonction compare renvoie 1
-//      La fonction compare prend deux élément en paramètre et doit renvoyer 1 s'ils sont égaux
+//      La fonction compare prend deux éléments en paramètre et doit renvoyer 1 s'ils sont égaux
+//      Le premier est l'élément donné en para à RemoveElement, le second et l'élément de la liste
 // 
 // Returns:
 //      Renvoie NULL s'il n'a pas pus supprimer l'élément, ou renvoie l'élément supprimer s'il a réussi
@@ -178,7 +179,7 @@ void * List::IsPresent(void * element,  int (*compare)(void*,void*)) {
     listElement = listElement->next;
   }
   if(listElement!=NULL) { //L'élément est présent
-    e = listElement;
+    e = listElement->item;
   }
   return e;
 }
