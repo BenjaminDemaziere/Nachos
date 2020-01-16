@@ -18,6 +18,7 @@ Interrupt *interrupt;		// interrupt status
 Statistics *stats;		// performance metrics
 Timer *timer;			// the hardware timer device,
 					// for invoking context switches
+int nbprocess;
 
 #ifdef FILESYS_NEEDED
 FileSystem *fileSystem;
@@ -82,7 +83,7 @@ Initialize (int argc, char **argv)
     int argCount;
     const char *debugArgs = "";
     bool randomYield = FALSE;
-
+    nbprocess=0;
 #ifdef USER_PROGRAM
     bool debugUserProg = FALSE;	// single step user program
 #endif
@@ -144,7 +145,7 @@ Initialize (int argc, char **argv)
     interrupt = new Interrupt;	// start up interrupt handling
     scheduler = new Scheduler ();	// initialize the ready queue
     if (randomYield)		// start the timer (if needed)
-	timer = new Timer (TimerInterruptHandler, 0, randomYield);
+	  timer = new Timer (TimerInterruptHandler, 0, randomYield);
 
     threadToBeDestroyed = NULL;
 
