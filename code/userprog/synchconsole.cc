@@ -30,7 +30,7 @@ SynchConsole::~SynchConsole()
     delete readAvail;
 }
 
-void copyStringFromMachine(int from, char *to, unsigned size)
+void SynchConsole::copyStringFromMachine(int from, char *to, unsigned size)
 {
     // char buffer[MAX_STRING_SIZE];
     // char * origin = (char *) from;
