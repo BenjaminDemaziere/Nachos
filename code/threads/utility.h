@@ -27,6 +27,10 @@
 
 // Miscellaneous useful routines
 
+// Setp 2 required fonctions
+void copyStringFromMachine (int from, char *to, unsigned size);
+void copyStringToMachine (int to, char *from, unsigned size);
+
 #include <bool.h>
 						// Boolean values.  
 						// This is the same definition 
@@ -74,7 +78,7 @@ extern void DEBUG (char flag, const char *format, ...);	// Print debug message
     if (!(condition)) {                                                       \
         fprintf(stderr, "Assertion failed: line %d, file \"%s\"\n",           \
                 __LINE__, __FILE__);                                          \
-	fflush(stderr);							      \
+	fflush(stderr);							                                  \
         Abort();                                                              \
     }
 

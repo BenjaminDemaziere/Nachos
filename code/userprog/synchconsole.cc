@@ -30,14 +30,6 @@ SynchConsole::~SynchConsole()
     delete readAvail;
 }
 
-void SynchConsole::copyStringFromMachine(int from, char *to, unsigned size)
-{
-    // char buffer[MAX_STRING_SIZE];
-    // char * origin = (char *) from;
-
-    strlcpy (to, (char *) from, (size_t) size);
-}
-
 void SynchConsole::SynchPutChar (const char ch)
 {
 	console->PutChar (ch);
@@ -48,18 +40,37 @@ char SynchConsole::SynchGetChar()
 	readAvail->P ();	// wait for character to arrive
 	return console->GetChar ();
 }
-void SynchConsole::SynchPutString (const char s[])
+void SynchConsole::SynchPutString (const char string[])
 {
-	for (int i = 0 ; s[i] != '\0' ; i++)
+	ASSERT(string != NULL);
+    
+    for (unsigned index = 0 ; string[index] != '\0' ; index++)
     {
-        SynchPutChar(s[i]);
+        SynchPutChar(string[index]);
     }
 }
-void SynchConsole::SynchGetString (char *s, int n)
+void SynchConsole::SynchGetString (char * string, int max)
 {
-    for (int i = 0 ; i <= n - 2 ; i++)
+    ASSERT(string != NULL && max > 0 && max <= MAX_STRING_SIZE);
+    
+    int index = 0;
+
+    for (char ch = SynchGetChar() ; index < max - 1 && ch != EOF && ch != '\0' ; index++)
     {
-        s[i] = SynchGetChar();
+        string[index] = ch;
+        ch = SynchGetChar();
     }
-    s[n - 1] = '\0';
+
+    if (string[index] != '\0')
+		string[index] = '\0';
+}
+
+void SynchConsole::SynchPutInt (int val)
+{
+    //
+}
+
+void SynchConsole::SynchGetInt (int *ref)
+{
+    ASSERT(ref != NULL);
 }

@@ -91,13 +91,37 @@ ExceptionHandler (ExceptionType which)
 			}
 			case SC_PutString:
 			{
-				synchconsole->SynchPutString ((char *) machine->ReadRegister (4));
+				char * buffer = new char[MAX_STRING_SIZE];
+
+				copyStringFromMachine (machine->ReadRegister (4), buffer, (unsigned) MAX_STRING_SIZE);
+				synchconsole->SynchPutString (buffer);
+
+				delete buffer;
+
 				break;
 			}
 			case SC_GetString:
 			{
-				synchconsole->SynchGetString ((char *) machine->ReadRegister (4), machine->ReadRegister (5));
-				// machine->WriteRegister (2, );
+				char * buffer = new char[MAX_STRING_SIZE];
+				int result = machine->ReadRegister (4);
+
+				
+				synchconsole->SynchGetString (buffer, MAX_STRING_SIZE);
+
+				copyStringToMachine (result, buffer, (unsigned) machine->ReadRegister (5));
+				machine->WriteRegister (2, result);
+
+				delete buffer;
+
+				break;
+			}
+			case SC_PutInt:
+			{
+				break;
+			}
+			case SC_GetInt:
+			{
+				
 				break;
 			}
 			default:
@@ -109,4 +133,26 @@ ExceptionHandler (ExceptionType which)
 
 		UpdatePC();
 	}
+}
+
+void copyStringFromMachine (int from, char * to, unsigned size)
+{
+	ASSERT(to != NULL && size > 0 && size <= MAX_STRING_SIZE);
+	
+	unsigned index = 0;
+	char value;
+	
+	for (machine->ReadMem (from, sizeof (char), (int *) &value) ; index < size && value != EOF && value != '\0' ; index += sizeof (char))
+	{
+		to[index] = value;
+		machine->ReadMem (from + index, sizeof (char), (int *) &value);
+	}
+
+	if (to[index] != '\0')
+		to[index] = '\0';
+}
+
+void copyStringToMachine (int to, char * from, unsigned size)
+{
+	//
 }
