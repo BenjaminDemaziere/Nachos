@@ -112,7 +112,7 @@ AddrSpace::AddrSpace (OpenFile * executable)
     numPages = divRoundUp (size, PageSize);
     size = numPages * PageSize;
 
-    ASSERT (numPages <= frameprovider->NumAvailFrame());	// check we're not trying
+    ASSERT ((int)numPages <= frameprovider->NumAvailFrame());	// check we're not trying
     // to run anything too big --
     // at least until we have
     // virtual memory
@@ -197,8 +197,8 @@ AddrSpace::~AddrSpace ()
 {
   // LB: Missing [] for delete
   // delete pageTable;
-  int i =0;
-  for(i ; i < numPages ; i++){
+  unsigned int i =0;
+  for(; i < numPages ; i++){
     frameprovider->ReleaseFrame(pageTable[i].physicalPage);
   }
   delete [] pageTable;

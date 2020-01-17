@@ -82,7 +82,7 @@ ExceptionHandler (ExceptionType which)
 
     if (which == SyscallException) {
         switch (type) {
-            case SC_Exit:
+            case SC_Exit: {
                 DEBUG('a', "Exit, initiated by user program.\n");
 
                 //Thread main attend les autres threads du processus
