@@ -104,6 +104,7 @@ ExceptionHandler (ExceptionType which)
               }else{ //Désalloue le processus
                 mutex->V();
                 attente->P();
+                delete currentThread->space;
                 currentThread->Finish();
               }
                 //Dernier processus termine nachos
@@ -192,6 +193,62 @@ ExceptionHandler (ExceptionType which)
                 do_UserThreadExit();
                 break;
             }
+
+            case SC_UserThreadJoin: {
+                DEBUG('a', "UserThreadJoin, initiated by user program.\n");
+                int idT = machine->ReadRegister(4);
+                do_UserThreadJoin(idT);
+                break;
+            }
+
+            case SC_SemaphoreInit: {
+                DEBUG('a', "SempahoreInit, initiated by user program.\n");
+                int sem = machine->ReadRegister(4); //Le sem utilisateur
+                int nbValue = machine->ReadRegister(5); //Le nombre pour initialiser le sémaphore
+
+                Semaphore * semSystem = new Semaphore("Sem utilisateur",nbValue); //Création du sémaphore système
+
+                machine->WriteMem(sem,4,(int)semSystem); //Ecrit dans le coté utilisateur l'adresse du sémahpore système
+
+                break;
+            }
+
+            case SC_SemaphoreP: {
+                DEBUG('a', "SempahoreP, initiated by user program.\n");
+                int userSem = machine->ReadRegister(4); //Le sémaphore utilisateur
+
+                int adrSem;
+                machine->ReadMem(userSem,4,&adrSem); //Lit l'adresse du sémaphore système
+                Semaphore * sem = (Semaphore * ) adrSem;
+
+                sem->P();
+                break;
+            }
+
+            case SC_SemaphoreV: {
+                DEBUG('a', "SempahoreV, initiated by user program.\n");
+                int userSem = machine->ReadRegister(4); //Adresse utilisateur
+
+                int adrSem;
+                machine->ReadMem(userSem,4,&adrSem); //Lit l'adresse du sémaphore système
+                Semaphore * sem = (Semaphore * ) adrSem;
+
+                sem->V();
+                break;
+            }
+
+            case SC_SemaphoreFree: {
+                DEBUG('a', "SempahoreV, initiated by user program.\n");
+                int userSem = machine->ReadRegister(4); //Adresse utilisateur
+
+                int adrSem;
+                machine->ReadMem(userSem,4,&adrSem); //Lit l'adresse du sémaphore système
+                Semaphore * sem = (Semaphore * ) adrSem;
+
+                delete sem; //On supprime le sémaphore
+                break;
+            }
+
             case SC_ForkExec: {
 
               int s =machine->ReadRegister(4);
@@ -204,12 +261,7 @@ ExceptionHandler (ExceptionType which)
               break;
             }
 
-            case SC_UserThreadJoin: {
-                DEBUG('a', "UserThreadJoin, initiated by user program.\n");
-                int idT = machine->ReadRegister(4);
-                do_UserThreadJoin(idT);
-                break;
-            }
+
 
             default: {
                 printf("Unexpected user mode exception %d %d\n", which, type);

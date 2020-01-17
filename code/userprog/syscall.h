@@ -39,9 +39,10 @@
 #define SC_UserThreadCreate 17
 #define SC_UserThreadExit 18
 #define SC_UserThreadJoin 19
-#define SC_SempahoreInit 20
-#define SC_SempahoreP 21
-#define SC_SempahoreV 22
+#define SC_SemaphoreInit 20
+#define SC_SemaphoreP 21
+#define SC_SemaphoreV 22
+#define SC_SemaphoreFree 23
 
 #define SC_ForkExec 40
 
@@ -176,14 +177,17 @@ void UserThreadJoin(int idT);
 
 /*(étape 3) Sémaphore*/
 typedef struct sem_t {
-    
+    int sem; //The system semaphor
 }sem_t;
 
-void SempahoreInit(sem_t * sem, int val);
+void SemaphoreInit(sem_t * sem, int val);
 
-void SempahoreP(sem_t * sem);
+void SemaphoreP(sem_t * sem);
 
-void SempahoreV(sem_t * sem);
+void SemaphoreV(sem_t * sem);
+
+void SemaphoreFree(sem_t * sem);
+
 
 
 /*

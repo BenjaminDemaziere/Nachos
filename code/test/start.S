@@ -202,6 +202,38 @@ UserThreadJoin:
 	j	$31
 	.end UserThreadJoin
 
+	.globl SemaphoreInit
+	.ent SemaphoreInit
+SemaphoreInit:
+	addiu $2,$0,SC_SemaphoreInit
+	syscall
+	j	$31
+	.end SemaphoreInit
+
+	.globl SemaphoreP
+	.ent SemaphoreP
+SemaphoreP:
+	addiu $2,$0,SC_SemaphoreP
+	syscall
+	j	$31
+	.end SemaphoreP
+
+	.globl SemaphoreV
+	.ent SemaphoreV
+SemaphoreV:
+	addiu $2,$0,SC_SemaphoreV
+	syscall
+	j	$31
+	.end SemaphoreV
+
+	.globl SemaphoreFree
+	.ent SemaphoreFree
+SemaphoreFree:
+	addiu $2,$0,SC_SemaphoreFree
+	syscall
+	j	$31
+	.end SemaphoreFree
+
   .globl ForkExec
   .ent ForkExec
 ForkExec:
