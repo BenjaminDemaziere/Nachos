@@ -82,8 +82,17 @@ ExceptionHandler (ExceptionType which)
 
     if (which == SyscallException) {
         switch (type) {
-            case SC_Exit: //Exit correspond à un halt
-              //nbprocess--;
+            case SC_Exit:
+                DEBUG('a', "Exit, initiated by user program.\n");
+
+                //Thread main attend les autres threads du processus
+                if(currentThread->idT==0) {//thread Main
+                    while(currentThread->space->nbThreads>1) {
+                        currentThread->space->semaphoreEnd->P(); //Attend que tout les threads se terminent
+                    }
+                }
+
+            
               mutex->P();
               nbAtt++;
               if(nbAtt == nbprocess){
@@ -92,11 +101,16 @@ ExceptionHandler (ExceptionType which)
                 }
                 nbAtt=0;
                 mutex->V();
-              }else{
+              }else{ //Désalloue le processus
                 mutex->V();
                 attente->P();
+                currentThread->Finish();
               }
+                //Dernier processus termine nachos
+                interrupt->Halt();
 
+                break;
+            }
             case SC_Halt: {
                 DEBUG('a', "Shutdown, initiated by user program.\n");
                 interrupt->Halt();
@@ -164,8 +178,9 @@ ExceptionHandler (ExceptionType which)
                 DEBUG('a', "UserThreadCreate, initiated by user program.\n");
                 int f = machine->ReadRegister(4); //Récupère le pointeur vers la fonction et les arguments
                 int args = machine->ReadRegister(5);
+                int adrExit = machine->ReadRegister(6); //Adresse de UserThreadExit
 
-                int th = do_UserThreadCreate(f,args);
+                int th = do_UserThreadCreate(f,args,adrExit);
 
                 machine->WriteRegister(2, th); //Ecrit la valeur de retour dans le registre 2
 
@@ -187,6 +202,13 @@ ExceptionHandler (ExceptionType which)
               machine->WriteRegister(2, 0); // On écrit la valeur de retour
               currentThread->Yield();
               break;
+            }
+
+            case SC_UserThreadJoin: {
+                DEBUG('a', "UserThreadJoin, initiated by user program.\n");
+                int idT = machine->ReadRegister(4);
+                do_UserThreadJoin(idT);
+                break;
             }
 
             default: {

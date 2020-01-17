@@ -38,6 +38,10 @@
 
 #define SC_UserThreadCreate 17
 #define SC_UserThreadExit 18
+#define SC_UserThreadJoin 19
+#define SC_SempahoreInit 20
+#define SC_SempahoreP 21
+#define SC_SempahoreV 22
 
 #define SC_ForkExec 40
 
@@ -166,7 +170,27 @@ int UserThreadCreate(void f(void *arg), void *arg);
 
 void UserThreadExit();
 
+/*prend en paramètre le numéro du thread retourné par  UserThreadCreate*/
+void UserThreadJoin(int idT);
+
+
+/*(étape 3) Sémaphore*/
+typedef struct sem_t {
+    
+}sem_t;
+
+void SempahoreInit(sem_t * sem, int val);
+
+void SempahoreP(sem_t * sem);
+
+void SempahoreV(sem_t * sem);
+
+
+/*
+étape 4, création d'un nouveau processus
+*/
 int ForkExec(char *s);
+
 
 #endif // IN_USER_MODE
 

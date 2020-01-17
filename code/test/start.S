@@ -180,6 +180,7 @@ GetInt:
 	.globl UserThreadCreate
 	.ent UserThreadCreate
 UserThreadCreate:
+	la $6, UserThreadExit /*Use to call UserThreadExit at the end of the thread*/
 	addiu $2,$0,SC_UserThreadCreate
 	syscall
 	j	$31
@@ -193,6 +194,13 @@ UserThreadExit:
 	j	$31
 	.end UserThreadExit
 
+	.globl UserThreadJoin
+	.ent UserThreadJoin
+UserThreadJoin:
+	addiu $2,$0,SC_UserThreadJoin
+	syscall
+	j	$31
+	.end UserThreadJoin
 
   .globl ForkExec
   .ent ForkExec
@@ -201,6 +209,7 @@ ForkExec:
   syscall
   j	$31
   .end ForkExec
+
 
 /* dummy function to keep gcc happy */
         .globl  __main

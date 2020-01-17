@@ -118,8 +118,11 @@ AddrSpace::AddrSpace (OpenFile * executable)
     // virtual memory
 
 
-    // listThreads = new List;
-    nbThreads = 452;
+    listThreads = new List;
+    nbThreads = 1; //Nombre de thread actif (1 car il y a le thread main)
+    uniqueIdT = 0;
+    semAddrspace = new Semaphore("semAddrspace",1);
+    semaphoreEnd = new Semaphore("semaphoreEnd",0);
 
     /*Création de la bitmap pour la table des pages*/
     usedPageTable = new BitMap(numPages);
@@ -199,6 +202,10 @@ AddrSpace::~AddrSpace ()
     frameprovider->ReleaseFrame(pageTable[i].physicalPage);
   }
   delete [] pageTable;
+  delete usedPageTable;
+  delete semAddrspace;
+  delete semaphoreEnd;
+  delete listThreads;
   // End of modification
 }
 
@@ -231,6 +238,11 @@ AddrSpace::InitRegisters ()
     // allocated the stack; but subtract off a bit, to make sure we don't
     // accidentally reference off the end!
     machine->WriteRegister (StackReg, numPages * PageSize - 16);
+
+    // usedPageTable->Mark(numPages-1); //Indique que les pages sont réservées
+    // usedPageTable->Mark(numPages-2);
+    // usedPageTable->Mark(numPages-3);
+
     DEBUG ('a', "Initializing stack register to %d\n",
 	   numPages * PageSize - 16);
 }
@@ -265,30 +277,91 @@ AddrSpace::RestoreState ()
     machine->pageTableSize = numPages;
 }
 
-
-int AddrSpace::BeginningStackThread() {
-    int i = 0;
-    while(i<(int)numPages-2 && usedPageTable->Test(i)==1) {
-        i++;
-    }
-    if(i==(int)numPages-2) { //Erreur aucune page de libre
-        DEBUG ('a', "Aucun espace pour allouer une nouvelle pile pour le thread\n");
-        i =-1;
-    }
-    else { //On occupe 3 page pour la pile
-        usedPageTable->Mark(i);
-        usedPageTable->Mark(i+1);
-        usedPageTable->Mark(i+2);
-        i+=2; //Le début de la pile
-    }
-    return i*PageSize;
+int AddrSpace::NewIdThread() {
+    semAddrspace->P();
+    uniqueIdT++;
+    semAddrspace->V();
+    return uniqueIdT;
 }
 
+int AddrSpace::BeginningStackThread(Thread * thread) {
+    semAddrspace->P();
+    int numP = 0;
+    //Cherche 3 pages consécutives libres
+    while(numP<(int)numPages-2 && (usedPageTable->Test(numP)==1 || usedPageTable->Test(numP+1)==1 || usedPageTable->Test(numP+2)==1)) {
+        numP++;
+    }
+    if(numP==(int)numPages-2) { //Erreur aucune page de libre
+        DEBUG ('a', "Aucun espace pour allouer une nouvelle pile pour le thread\n");
+        return -1;
+    }
+    else { //On occupe 3 page pour la pile
+        usedPageTable->Mark(numP);
+        usedPageTable->Mark(numP+1);
+        usedPageTable->Mark(numP+2);
+        numP+=2; //Le début de la pile
 
+        //Met dans la liste le thread
+        nbThreads++;
+        listThreads->Append(thread);
+    }
+    semAddrspace->V();
+    return (numP+1)*PageSize-16;
+}
 
+/*
+    Fonction utilisée pour listThread->RemoveElement()
+*/
+int compareThread(void *a,void *b) {
+    int cmp = 0;
+    Thread *t1 = (Thread *)a;
+    Thread *t2 = (Thread *)b;
+    if(t1->idT==t2->idT) {
+        cmp =1;
+    }
+    return cmp;
+}
 
+int AddrSpace::ClearThread(Thread * t) {
+    semAddrspace->P();
+    int succ=0;
+    Thread * th = (Thread *) listThreads->RemoveElement((void *)(t), compareThread);
+    if(th!=NULL) { //Le thread a bien été supprimé de la liste
+        nbThreads--;
+        succ = 1;
+        int idT = (t->spaceStack)/PageSize;
+        usedPageTable->Clear(idT);
+        usedPageTable->Clear(idT-1);
+        usedPageTable->Clear(idT-2);
+        if(nbThreads==1) { //S'il n'y a plus de threads 
+            semaphoreEnd->V(); //Le programme peut se terminer
+        }
+    }
+    semAddrspace->V();
+    return succ;
+}
 
-
-// void AddrSpace::GetNewIdThread() {
-
-// }
+/*
+    Fonction utilisée dans do_UserThreadJoin pour touver un thread à partir de son id
+*/
+static int userThreadCompare(void * id, void * t) {
+    Thread * th = (Thread *) t;
+    int * idT = (int *) id;
+    return th->idT == *idT;
+}
+void AddrSpace::JoinThread(int idT) {
+    semAddrspace->P();
+    Semaphore * sem;
+    //On récupére le thread qui à l'ID voulu
+    Thread * th = (Thread *) currentThread->space->listThreads->IsPresent(&idT,userThreadCompare);
+    if(th != NULL) { //Le thread existe
+        sem = new Semaphore("Sem",0);
+        th->listSemaphoreJoin->Append(sem); //Ajoute le semaphore à la liste des sem du thread
+        semAddrspace->V();
+        sem->P(); //Le thread courant attend le thread idT
+        delete sem; //Supprime le sémaphore
+    }
+    else {
+        DEBUG('t', "ThreadJoin: le thread %d n'existe pas\n", idT);
+    }
+}

@@ -7,6 +7,7 @@
 typedef struct ThreadUserArgs {
     int f;
     int arg;
+    int adrExit;
 }ThreadUserArgs;
 
 
@@ -29,46 +30,74 @@ static void StartUserThread(int f) {
     //Lui passe ses arguments dans le registre 4
     machine->WriteRegister(4,args->arg);
 
-    //Initialise le pointeur de pile à 3 pages au dessous du pointeur de programme principal
-    int begStack = currentThread->space->BeginningStackThread();
-    if(begStack!=-1) {
-        machine->WriteRegister(StackReg, begStack);
+    //Registre de pile
+    machine->WriteRegister(StackReg, currentThread->spaceStack);
 
-        //Lance la simulation
-        machine->Run();
+    //Registre de retour
+    machine->WriteRegister(RetAddrReg,args->adrExit);
 
-    }
-    else { //Erreur , création thread impossible
+    //Supprime les arguments
+    delete args;
 
-    }
+    //Lance la simulation
+    machine->Run();
 }
 
 
-int do_UserThreadCreate(int f, int arg) {
+/*
+A la fin de la fonction le thread est bien initialisé grâce au sémaphore
+*/
+int do_UserThreadCreate(int f, int arg, int adrExit) {
     int idThread = -1;
     Thread * thread = new Thread("Thread utilisateur"); //Création du thread noyau pour l'utilisateur
 
     if(thread==NULL) {
-        DEBUG('t', "Création thread système pour l'utilisateur impossible\n");
+        DEBUG('t', "do_UserThreadCreate: Création thread système pour l'utilisateur impossible\n");
     }
-    else {
-        ThreadUserArgs * args = new ThreadUserArgs;
-        args->f = f;
-        args->arg = arg;
+    else {        
+        //Initialise les structures pour l'addrspace
+        //Retourne l'adresse de début de pile
+        int begStack = currentThread->space->BeginningStackThread(thread);
 
-        thread->Fork(StartUserThread,(int) args); //lancement de la fonction StartUserThread
-        currentThread->Yield();
-        delete args;
+        if(begStack!=-1) { //L'initialisation s'est bien passée
+
+            ThreadUserArgs * args = new ThreadUserArgs;
+            args->f = f;
+            args->arg = arg;
+            args->adrExit = adrExit;
+
+            idThread = currentThread->space->NewIdThread(); //Génère un id unique pour le thread
+            thread->idT = idThread; 
+            thread->spaceStack = begStack; //Le début de la pile
+            thread->Fork(StartUserThread,(int) args); //lancement de la fonction StartUserThread
+        }
+        else { //Erreur , création thread impossible
+            DEBUG('t', "Création thread système pour l'utilisateur impossible, plus de place dans l'addrspace\n");
+        }
     }
 
-    return idThread; //TODO
+    return idThread;
 }
 
 
 
-
+/*
+Fonction utilisée dans do_UserThreadExit pour que le thread qui exit relache les sémaphores
+permettant au thread ayant fait join avec ce thread de terminer
+*/
+static void userThreadCompareSemaphore(int s) {
+    Semaphore * sem = (Semaphore *) s;
+    sem->V(); //Relache le sémaphore
+}
 void do_UserThreadExit() {
-    // currentThread->space->();
+    if(currentThread->listSemaphoreJoin != NULL) { //S'il y a une liste de sémaphore
+        currentThread->listSemaphoreJoin->Mapcar(userThreadCompareSemaphore);
+    }
+    currentThread->space->ClearThread(currentThread); //Désalloue le thread dans l'addrspace
+    currentThread->Finish(); //Termine le thread
+}
 
-    currentThread->Finish();
+
+void do_UserThreadJoin(int idT) {
+    currentThread->space->JoinThread(idT);
 }

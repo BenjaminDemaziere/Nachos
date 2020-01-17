@@ -51,6 +51,10 @@ class List
     void Append (void *item);	// Put item at the end of the list
     void *Remove ();		// Take item off the front of the list
 
+    void* RemoveElement (void * element,  int (*compare)(void*,void*)); //Remove the given element from the list
+
+    void * IsPresent(void * element,  int (*compare)(void*,void*)); //Return NULL if the element is not present, or the element
+
     void Mapcar (VoidFunctionPtr func);	// Apply "func" to every element 
     // on the list
     bool IsEmpty ();		// is the list empty? 
