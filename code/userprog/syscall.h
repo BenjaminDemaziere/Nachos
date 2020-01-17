@@ -39,6 +39,9 @@
 #define SC_UserThreadCreate 17
 #define SC_UserThreadExit 18
 #define SC_UserThreadJoin 19
+#define SC_SempahoreInit 20
+#define SC_SempahoreP 21
+#define SC_SempahoreV 22
 
 
 #ifdef IN_USER_MODE
@@ -167,6 +170,18 @@ void UserThreadExit();
 
 /*prend en paramètre le numéro du thread retourné par  UserThreadCreate*/
 void UserThreadJoin(int idT);
+
+
+/*(étape 3) Sémaphore*/
+typedef struct sem_t {
+    
+}sem_t;
+
+void SempahoreInit(sem_t * sem, int val);
+
+void SempahoreP(sem_t * sem);
+
+void SempahoreV(sem_t * sem);
 
 #endif // IN_USER_MODE
 

@@ -7,6 +7,7 @@
 typedef struct ThreadUserArgs {
     int f;
     int arg;
+    int adrExit;
 }ThreadUserArgs;
 
 
@@ -32,6 +33,9 @@ static void StartUserThread(int f) {
     //Registre de pile
     machine->WriteRegister(StackReg, currentThread->spaceStack);
 
+    //Registre de retour
+    machine->WriteRegister(RetAddrReg,args->adrExit);
+
     //Supprime les arguments
     delete args;
 
@@ -43,7 +47,7 @@ static void StartUserThread(int f) {
 /*
 A la fin de la fonction le thread est bien initialisé grâce au sémaphore
 */
-int do_UserThreadCreate(int f, int arg) {
+int do_UserThreadCreate(int f, int arg, int adrExit) {
     int idThread = -1;
     Thread * thread = new Thread("Thread utilisateur"); //Création du thread noyau pour l'utilisateur
 
@@ -60,6 +64,7 @@ int do_UserThreadCreate(int f, int arg) {
             ThreadUserArgs * args = new ThreadUserArgs;
             args->f = f;
             args->arg = arg;
+            args->adrExit = adrExit;
 
             idThread = currentThread->space->NewIdThread(); //Génère un id unique pour le thread
             thread->idT = idThread; 
@@ -92,26 +97,7 @@ void do_UserThreadExit() {
     currentThread->Finish(); //Termine le thread
 }
 
-/*
-    Fonction utilisée dans do_UserThreadJoin pour touver un thread à partir de son id
-*/
-static int userThreadCompare(void * id, void * t) {
-    Thread * th = (Thread *) t;
-    int * idT = (int *) id;
-    return th->idT == *idT;
-}
-void do_UserThreadJoin(int idT) {
-    Semaphore * sem;
 
-    //On récupére le thread qui à l'ID voulu
-    Thread * th = (Thread *) currentThread->space->listThreads->IsPresent(&idT,userThreadCompare);
-    if(th != NULL) { //Le thread existe
-        sem = new Semaphore("Sem",0);
-        th->listSemaphoreJoin->Append(sem); //Ajoute le semaphore à la liste des sem du thread
-        sem->P(); //Le thread courant atteint le thread idT
-        delete sem; //Supprime le sémaphore
-    }
-    else {
-        DEBUG('t', "do_UserThreadJoin: le thread %d n'existe pas\n", idT);
-    }
+void do_UserThreadJoin(int idT) {
+    currentThread->space->JoinThread(idT);
 }

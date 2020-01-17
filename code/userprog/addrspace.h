@@ -42,14 +42,22 @@ class AddrSpace
     void SaveState ();		// Save/restore address space-specific
     void RestoreState ();	// info on a context switch 
 
+
+  /*
+    Toutes les fonctions ci dessous sont protégées par sémaphore
+  */
+
   //Retourne l'adresse du pointeur de pile pour le nouveau thread
   //Retourne -1 si aucun n'espace est disponible pour la pile 
-  //Effet collatéral: Alloue 3 pages pour la pile, incrémente le nombre de threads, et ajout le thread à la liste
+  //Effet collatéral: Alloue 3 pages pour la pile, incrémente le nombre de threads, et ajoute le thread à la liste de threads
     int BeginningStackThread(Thread * t);
 
   //Désalloue la place sur la pile et enlève de la liste le thread idT, décrémente le nombre de threads
   //Renvoie 1 si la désallocation s'est bien passé, 0 sinon
     int ClearThread(Thread * t);
+
+  //Permet de join le thread courant avec le thread d'id idT
+    void JoinThread(int idT);
 
   //Return the number of user threads in this addrspace
     int getNumberThreads();

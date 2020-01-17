@@ -161,6 +161,10 @@ AddrSpace::~AddrSpace ()
   // LB: Missing [] for delete
   // delete pageTable;
   delete [] pageTable;
+  delete usedPageTable;
+  delete semAddrspace;
+  delete semaphoreEnd;
+  delete listThreads;
   // End of modification
 }
 
@@ -292,4 +296,29 @@ int AddrSpace::ClearThread(Thread * t) {
     }
     semAddrspace->V();
     return succ;
+}
+
+/*
+    Fonction utilisée dans do_UserThreadJoin pour touver un thread à partir de son id
+*/
+static int userThreadCompare(void * id, void * t) {
+    Thread * th = (Thread *) t;
+    int * idT = (int *) id;
+    return th->idT == *idT;
+}
+void AddrSpace::JoinThread(int idT) {
+    semAddrspace->P();
+    Semaphore * sem;
+    //On récupére le thread qui à l'ID voulu
+    Thread * th = (Thread *) currentThread->space->listThreads->IsPresent(&idT,userThreadCompare);
+    if(th != NULL) { //Le thread existe
+        sem = new Semaphore("Sem",0);
+        th->listSemaphoreJoin->Append(sem); //Ajoute le semaphore à la liste des sem du thread
+        semAddrspace->V();
+        sem->P(); //Le thread courant attend le thread idT
+        delete sem; //Supprime le sémaphore
+    }
+    else {
+        DEBUG('t', "ThreadJoin: le thread %d n'existe pas\n", idT);
+    }
 }

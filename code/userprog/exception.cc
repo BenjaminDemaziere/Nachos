@@ -150,8 +150,9 @@ ExceptionHandler (ExceptionType which)
                 DEBUG('a', "UserThreadCreate, initiated by user program.\n");
                 int f = machine->ReadRegister(4); //Récupère le pointeur vers la fonction et les arguments
                 int args = machine->ReadRegister(5);
+                int adrExit = machine->ReadRegister(6); //Adresse de UserThreadExit
 
-                int th = do_UserThreadCreate(f,args);
+                int th = do_UserThreadCreate(f,args,adrExit);
 
                 machine->WriteRegister(2, th); //Ecrit la valeur de retour dans le registre 2
 
