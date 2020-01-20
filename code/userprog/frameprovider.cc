@@ -8,6 +8,10 @@ FrameProvider::FrameProvider (){
   frameMap = new BitMap(NumPhysPages);
 }
 
+
+FrameProvider::~FrameProvider(){
+  delete frameMap;
+}
 //Permet de libérer le cadre d'index "index";
 void FrameProvider::ReleaseFrame(int index){
   frameMap->Clear(index);
