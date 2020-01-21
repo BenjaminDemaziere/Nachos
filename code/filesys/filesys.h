@@ -73,7 +73,7 @@ class FileSystem {
     					// If "format", there is nothing on
 					// the disk, so initialize the directory
     					// and the bitmap of free blocks.
-    
+
     bool Create(const char *name, int initialSize);
 					// Create a file (UNIX creat)
 
@@ -91,9 +91,7 @@ class FileSystem {
    OpenFile* directoryFile;		// "Root" directory -- list of
 					// file names, represented as a file
 
-   Directory* currentDir;
-
-   SectorProvider* sectorProvider;
+   OpenFile* currentDirFile;
 };
 
 #endif // FILESYS

@@ -37,12 +37,17 @@
 
 Directory::Directory(int size, Directory *parent)
 {
+    /*BitMap *freeMap;
+    freeMap->FetchFrom(0);
+    FileHeader *dir = new FileHeader;*/
+
+
     table = new DirectoryEntry[size];
     tableSize = size;
     table[0].inUse=TRUE;
     table[0].isDir=TRUE;
     table[0].name=".";
-    table[0].sector = sectorProvider->GetEmptySector();
+    table[0].sector = freeMap->find();
     table[1].inUse=TRUE;
     table[1].isDir=TRUE;
     table[1].name="..";
@@ -52,6 +57,11 @@ Directory::Directory(int size, Directory *parent)
     for (int i = 2; i < tableSize; i++){
       table[i].inUse = FALSE;
     }
+    /*ASSERT(dir->Allocate(freeMap,DirectoryFileSize));
+    dir->WriteBack(table[0].sector);
+
+    OpenFile * dirFile = new OpenFile(table[0].sector);
+    this->WriteBack(dirFile);*/
 }
 
 //----------------------------------------------------------------------
@@ -171,12 +181,31 @@ Directory::Remove(const char *name)
     if (i == -1 || i==0 || i==1)
 	return FALSE; 		// name not in directory
     if(table[i].isDir){
-    DirectoryEntry *  tableDirFils = 
+      OpenFile * dirFileRemove = new OpenFile(table[i].sector);
+      Directory *dirToRemove = new Directory(NumDirEntries);
+      dirToRemove->FetchFrom(dirFileRemove);
+      for(int j = 2; j<10;j++){
+        if(dirToRemove->table[j].inUse){
+          return FALSE;
+        }
+      }
     }
     table[i].inUse = FALSE;
-
+    /*OpenFile * dirFile = new OpenFile(table[0].sector);
+    this->WriteBack(dirFile);*/
     return TRUE;
 }
+
+
+//----------------------------------------------------------------------
+// Directory::Remove
+// 	Remove a file name from the directory.  Return TRUE if successful;
+//	return FALSE if the file isn't in the directory.
+//
+//	"name" -- the file name to be removed
+//----------------------------------------------------------------------
+
+
 
 //----------------------------------------------------------------------
 // Directory::List
