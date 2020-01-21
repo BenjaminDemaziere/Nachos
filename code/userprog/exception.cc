@@ -121,7 +121,6 @@ ExceptionHandler (ExceptionType which)
 			}
 			case SC_GetInt:
 			{
-				
 				break;
 			}
 			default:
@@ -139,13 +138,17 @@ void copyStringFromMachine (int from, char * to, unsigned size)
 {
 	ASSERT(to != NULL && size > 0 && size <= MAX_STRING_SIZE);
 	
+	char ch;
 	unsigned index = 0;
-	char value;
+	unsigned ch_size = sizeof (char);
 	
-	for (machine->ReadMem (from, sizeof (char), (int *) &value) ; index < size && value != EOF && value != '\0' ; index += sizeof (char))
+	for (machine->ReadMem (from, ch_size, (int *) &ch) ; index < size && ch != EOF && ch != '\0' ; index += ch_size)
 	{
-		to[index] = value;
-		machine->ReadMem (from + index, sizeof (char), (int *) &value);
+		// DEBUG('a', "ch : %c ; index : %u ; to : %s ; ch_size : %u\n", ch, index, to, ch_size);
+		to[index] = ch;
+		machine->ReadMem (from + index + ch_size, ch_size, (int *) &ch);
+		int count = 0; // instructions obligatoires pour contourner un souci sur l'instruction ReadMem
+		count = count;
 	}
 
 	if (to[index] != '\0')

@@ -46,7 +46,7 @@ void SynchConsole::SynchPutString (const char string[])
     
     for (unsigned index = 0 ; string[index] != '\0' ; index++)
     {
-        SynchPutChar(string[index]);
+        SynchPutChar (string[index]);
     }
 }
 void SynchConsole::SynchGetString (char * string, int max)

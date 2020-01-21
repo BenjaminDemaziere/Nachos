@@ -136,6 +136,12 @@ void Yield ();
 
 
 void PutChar (char ch);
+void PutString (const char[]);
+void PutInt (int value);
+
+char GetChar();
+void GetString (char * string, unsigned max);
+void GetInt (int * ref);
 
 #endif // IN_USER_MODE
 
