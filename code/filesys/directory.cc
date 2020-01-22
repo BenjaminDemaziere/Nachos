@@ -35,33 +35,14 @@
 //	"size" is the number of entries in the directory
 //----------------------------------------------------------------------
 
-Directory::Directory(int size, Directory *parent)
+Directory::Directory(int size)
 {
-    /*BitMap *freeMap;
-    freeMap->FetchFrom(0);
-    FileHeader *dir = new FileHeader;*/
-
-
     table = new DirectoryEntry[size];
     tableSize = size;
-    table[0].inUse=TRUE;
-    table[0].isDir=TRUE;
-    table[0].name=".";
-    table[0].sector = freeMap->find();
-    table[1].inUse=TRUE;
-    table[1].isDir=TRUE;
-    table[1].name="..";
-    if(parent != NULL){
-      table[1].sector = parent->table[0].sector;
-    }
-    for (int i = 2; i < tableSize; i++){
+    for (int i = 0; i < tableSize; i++){
       table[i].inUse = FALSE;
     }
-    /*ASSERT(dir->Allocate(freeMap,DirectoryFileSize));
-    dir->WriteBack(table[0].sector);
 
-    OpenFile * dirFile = new OpenFile(table[0].sector);
-    this->WriteBack(dirFile);*/
 }
 
 //----------------------------------------------------------------------
@@ -129,11 +110,11 @@ Directory::FindIndex(const char *name)
 int
 Directory::Find(const char *name)
 {
-    int i = FindIndex(name);
+  int i = FindIndex(name);
 
-    if (i != -1)
-	return table[i].sector;
-    return -1;
+  if (i != -1)
+	  return table[i].sector;
+  return -1;
 }
 
 //----------------------------------------------------------------------
@@ -148,15 +129,14 @@ Directory::Find(const char *name)
 //----------------------------------------------------------------------
 
 bool
-Directory::Add(const char *name, int newSector , bool isDir)
+Directory::Add(const char *name, int newSector)
 {
     if (FindIndex(name) != -1)
-	return FALSE;
+	   return FALSE;
 
     for (int i = 0; i < tableSize; i++){
       if (!table[i].inUse) {
         table[i].inUse = TRUE;
-        table[i].isDir = isDir;
         strncpy(table[i].name, name, FileNameMaxLen);
         table[i].sector = newSector;
         return TRUE;
@@ -177,22 +157,24 @@ bool
 Directory::Remove(const char *name)
 {
     int i = FindIndex(name);
-
-    if (i == -1 || i==0 || i==1)
-	return FALSE; 		// name not in directory
-    if(table[i].isDir){
+    if (i == -1 || i==0 || i==1){
+      return FALSE; 		// name not in directory
+    }
+    FileHeader * fileToRemove = new FileHeader;
+    fileToRemove->FetchFrom(table[i].sector);
+    if(fileToRemove->isDir){
       OpenFile * dirFileRemove = new OpenFile(table[i].sector);
       Directory *dirToRemove = new Directory(NumDirEntries);
       dirToRemove->FetchFrom(dirFileRemove);
       for(int j = 2; j<10;j++){
         if(dirToRemove->table[j].inUse){
+          delete fileToRemove;
           return FALSE;
         }
       }
     }
+    delete fileToRemove;
     table[i].inUse = FALSE;
-    /*OpenFile * dirFile = new OpenFile(table[0].sector);
-    this->WriteBack(dirFile);*/
     return TRUE;
 }
 

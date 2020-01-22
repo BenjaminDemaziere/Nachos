@@ -18,6 +18,7 @@
 #define DIRECTORY_H
 
 #include "openfile.h"
+#include "filesys.h"
 
 #define FileNameMaxLen 		9	// for simplicity, we assume
 					// file names are <= 9 characters long
@@ -51,7 +52,7 @@ class DirectoryEntry {
 
 class Directory {
   public:
-    Directory(int size,Directory *parent); 		// Initialize an empty directory
+    Directory(int size); 		// Initialize an empty directory
 					// with space for "size" files
     ~Directory();			// De-allocate the directory
 
@@ -72,13 +73,13 @@ class Directory {
 					//  of the directory -- all the file
 					//  names and their contents.
 
-  private:
     int tableSize;			// Number of directory entries
     DirectoryEntry *table;		// Table of pairs:
 					// <file name, file header location>
 
     int FindIndex(const char *name);	// Find the index into the directory
 					//  table corresponding to "name"
+        private:
 };
 
 #endif // DIRECTORY_H
