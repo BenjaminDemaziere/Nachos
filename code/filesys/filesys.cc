@@ -126,6 +126,9 @@ FileSystem::FileSystem(bool format)
         freeMapFile = new OpenFile(FreeMapSector);
         directoryFile = new OpenFile(DirectorySector);
         currentDirFile = new OpenFile(DirectorySector);
+        for(int i = 0; i< NumMaxOpenedFiles; i++){
+          fileTable[i] = NULL;
+        }
     // Once we have the files "open", we can write the initial version
     // of each file back to disk.  The directory at this point is completely
     // empty; but the bitmap has been changed to reflect the fact that
@@ -153,6 +156,9 @@ FileSystem::FileSystem(bool format)
         freeMapFile = new OpenFile(FreeMapSector);
         directoryFile = new OpenFile(DirectorySector);
         currentDirFile = new OpenFile(DirectorySector);
+        for(int i = 0; i< NumMaxOpenedFiles; i++){
+          fileTable[i] = NULL;
+        }
     }
 }
 
@@ -289,6 +295,34 @@ FileSystem::CreateDir(const char *name)
 
 
 
+bool
+FileSystem::AddToFdTable(OpenFile * openFile)
+{
+  if(openFile->GetHeader()->isDir){// On vérifie que le fichier ne soit pas un répertoire
+    delete openFile;
+    return FALSE;
+  }
+
+
+  for (int i = 0; i<NumMaxOpenedFiles;i++){
+    //on vérifie si le fichier est déja ouvert
+    if (fileTable[i] != NULL){
+      if (fileTable[i]->GetHeader()->GetFd() == openFile->GetHeader()->GetFd()){
+        delete openFile;
+        return FALSE;
+      }
+    }
+  }
+
+  for (int i = 0; i<NumMaxOpenedFiles;i++){
+    if (fileTable[i] == NULL){ // On vérifie qu'il reste une place dans la table
+      fileTable[i] = openFile; // On l'ajoute à la table
+      return TRUE;
+
+    }
+  }
+}
+
 //----------------------------------------------------------------------
 // FileSystem::Open
 // 	Open a file for reading and writing.
@@ -309,11 +343,29 @@ FileSystem::Open(const char *name)
     DEBUG('f', "Opening file %s\n", name);
     directory->FetchFrom(currentDirFile);
     sector = directory->Find(name);
+
     if (sector >= 0)
-	openFile = new OpenFile(sector);	// name was found in directory
+	    openFile = new OpenFile(sector);	// name was found in directory
+
+
+
     delete directory;
-    return openFile;				// return NULL if not found
+    return openFile;
+
 }
+
+
+void FileSystem::Close(int fd){
+  for (int i = 0; i<NumMaxOpenedFiles;i++){
+    if (fileTable[i]->GetHeader()->GetFd() == fd){ //on vérifie si le fichier est déja ouvert
+      OpenFile * o = fileTable[i];
+      fileTable[i] = NULL;
+      delete o;
+      break;
+    }
+  }
+}
+
 
 //----------------------------------------------------------------------
 // FileSystem::Remove
@@ -346,6 +398,7 @@ FileSystem::Remove(const char *name)
     }
     fileHdr = new FileHeader;
     fileHdr->FetchFrom(sector);
+    //Close(fileHdr->GetFd());
 
     freeMap = new BitMap(NumSectors);
     freeMap->FetchFrom(freeMapFile);

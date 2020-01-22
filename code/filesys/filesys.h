@@ -38,6 +38,7 @@
 #include "copyright.h"
 #include "openfile.h"
 #define NumDirEntries 		10
+#define NumMaxOpenedFiles 10
 #ifdef FILESYS_STUB 		// Temporarily implement file system calls as
 				// calls to UNIX, until the real file system
 				// implementation is available
@@ -82,6 +83,8 @@ class FileSystem {
         // Create a directory
     OpenFile* Open(const char *name); 	// Open a file (UNIX open)
 
+    void Close(int fd); //Closes a file
+
     bool Remove(const char *name); 	// Delete a file (UNIX unlink)
 
     bool Move(const char *name); // Move to the directory named "name"
@@ -90,6 +93,8 @@ class FileSystem {
 
     void Print();			// List all the files and their contents
 
+    bool AddToFdTable(OpenFile * openFile);
+
   private:
    OpenFile* freeMapFile;		// Bit map of free disk blocks,
 					// represented as a file
@@ -97,6 +102,8 @@ class FileSystem {
 					// file names, represented as a file
 
    OpenFile* currentDirFile;
+
+   OpenFile* fileTable[NumMaxOpenedFiles];
 };
 
 #endif // FILESYS

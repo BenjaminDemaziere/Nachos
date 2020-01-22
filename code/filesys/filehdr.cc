@@ -48,6 +48,7 @@ FileHeader::Allocate(BitMap *freeMap, int fileSize, bool beDir)
 
     for (int i = 0; i < numSectors; i++)
 	    dataSectors[i] = freeMap->Find();
+
     return TRUE;
 }
 
@@ -147,4 +148,16 @@ FileHeader::Print()
         printf("\n");
     }
     delete [] data;
+}
+
+void FileHeader::GenerateFd(){
+  if(this->fd == 0){
+    this->fd=fdNextFile;
+    fdNextFile++;
+  }
+}
+
+
+int FileHeader::GetFd(){
+  return this->fd;
 }

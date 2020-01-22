@@ -30,6 +30,7 @@ extern Interrupt *interrupt;	// interrupt status
 extern Statistics *stats;	// performance metrics
 extern Timer *timer;		// the hardware alarm clock
 extern int nbprocess;
+
 /*#ifndef NB_PROCESS
 #define NB_PROCESS
 
@@ -55,6 +56,7 @@ extern FileSystem *fileSystem;
 #ifdef FILESYS
 #include "synchdisk.h"
 extern SynchDisk *synchDisk;
+extern int fdNextFile;
 #endif
 
 #ifdef NETWORK

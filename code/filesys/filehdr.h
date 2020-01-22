@@ -56,14 +56,23 @@ class FileHeader {
 
     void Print();			// Print the contents of the file.
 
+    void GenerateFd();
+
+    int GetFd();
+
     bool isDir;
 
+    //static int fdNextFile;
   private:
+    int fd = 0;
 
     int numBytes;			// Number of bytes in the file
     int numSectors;			// Number of data sectors in the file
     int dataSectors[NumDirect];		// Disk sector numbers for each data
 					// block in the file
 };
+
+
+
 
 #endif // FILEHDR_H

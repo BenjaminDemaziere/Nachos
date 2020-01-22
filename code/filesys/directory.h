@@ -79,7 +79,7 @@ class Directory {
 
     int FindIndex(const char *name);	// Find the index into the directory
 					//  table corresponding to "name"
-        private:
+   private:
 };
 
 #endif // DIRECTORY_H
