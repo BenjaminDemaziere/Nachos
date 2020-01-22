@@ -73,60 +73,84 @@ ExceptionHandler (ExceptionType which)
 	{
 		switch (type)
 		{
-			case SC_Halt:
+			case SC_Exit :
+			{
+				if (machine->ReadRegister (4) != 0)
+				{
+					printf("Retour différent de 0, erreur dans le programme. Terminaison...\n");
+					interrupt->Halt();
+				}
+				else
+				{
+					printf("Fin du programme utilisateur avec code retour 0\n");
+				}
+				
+				break;
+			}
+			
+			
+			case SC_Halt :
 			{
 				DEBUG('a', "Shutdown, initiated by user program.\n");
 				interrupt->Halt();
 				break;
 			}
-			case SC_PutChar:
+			case SC_PutChar :
 			{
 				synchconsole->SynchPutChar ((char) machine->ReadRegister (4));
 				break;
 			}
-			case SC_GetChar:
+			case SC_GetChar :
 			{
 				machine->WriteRegister (2, (int) synchconsole->SynchGetChar());
 				break;
 			}
-			case SC_PutString:
+			case SC_PutString :
 			{
 				char * buffer = new char[MAX_STRING_SIZE];
 
 				copyStringFromMachine (machine->ReadRegister (4), buffer, (unsigned) MAX_STRING_SIZE);
 				synchconsole->SynchPutString (buffer);
 
-				delete buffer;
+				delete [] buffer;
 
 				break;
 			}
-			case SC_GetString:
+			case SC_GetString :
 			{
 				char * buffer = new char[MAX_STRING_SIZE];
-				int result = machine->ReadRegister (4);
-
+				unsigned size = (unsigned) machine->ReadRegister (5);
 				
-				synchconsole->SynchGetString (buffer, MAX_STRING_SIZE);
+				synchconsole->SynchGetString (buffer, size);
+				DEBUG('a', "buffer = %s\n", buffer);
 
-				copyStringToMachine (result, buffer, (unsigned) machine->ReadRegister (5));
-				machine->WriteRegister (2, result);
+				copyStringToMachine (machine->ReadRegister (4), buffer, size);
 
-				delete buffer;
+				delete [] buffer;
 
 				break;
 			}
-			case SC_PutInt:
+			case SC_PutInt :
 			{
+				synchconsole->SynchPutInt (machine->ReadRegister (4));
 				break;
 			}
-			case SC_GetInt:
+			case SC_GetInt :
 			{
+				int phyAddr;
+
+				DEBUG('a', "Entrée dans SC_GetInt, arg = %d\n", machine->ReadRegister (4));
+
+				machine->Translate(machine->ReadRegister (4), &phyAddr, (int) sizeof (int), TRUE);
+				synchconsole->SynchGetInt ((int *) phyAddr);
+
 				break;
 			}
-			default:
+			default :
 			{
 				printf("Unexpected user mode exception %d %d\n", which, type);
 				ASSERT(FALSE);
+				break;
 			}
 		}
 
@@ -144,11 +168,11 @@ void copyStringFromMachine (int from, char * to, unsigned size)
 	
 	for (machine->ReadMem (from, ch_size, (int *) &ch) ; index < size && ch != EOF && ch != '\0' ; index += ch_size)
 	{
-		// DEBUG('a', "ch : %c ; index : %u ; to : %s ; ch_size : %u\n", ch, index, to, ch_size);
+		DEBUG('a', "ch : %c ; index : %u ; to : %s ; ch_size : %u\n", ch, index, to, ch_size);
 		to[index] = ch;
 		machine->ReadMem (from + index + ch_size, ch_size, (int *) &ch);
-		int count = 0; // instructions obligatoires pour contourner un souci sur l'instruction ReadMem
-		count = count;
+		int count = 0; // instruction obligatoire pour contourner un souci sur l'instruction ReadMem
+		count = count; // instruction obligatoire pour contourner un souci sur l'instruction ReadMem
 	}
 
 	if (to[index] != '\0')
@@ -157,5 +181,10 @@ void copyStringFromMachine (int from, char * to, unsigned size)
 
 void copyStringToMachine (int to, char * from, unsigned size)
 {
-	//
+	ASSERT(to >= 0 && from != NULL && size > 0 && size <= MAX_STRING_SIZE);
+
+	for (unsigned index = 0 ; from[index] != '\0' ; index++)	
+	{
+		machine->WriteMem (to + index, sizeof (char), (int) from[index]);
+	}
 }

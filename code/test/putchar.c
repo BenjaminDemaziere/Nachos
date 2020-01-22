@@ -1,4 +1,4 @@
-#include "syscall.h"
+# include "syscall.h"
 
 void print (char c, int n)
 {
@@ -6,7 +6,7 @@ void print (char c, int n)
 	
 	for (i = 0 ; i < n ; i++)
     {
-        PutChar (c + i);
+        PutChar ((char) (c + i));
     }
     PutChar ('\n');
 }
@@ -14,5 +14,5 @@ void print (char c, int n)
 int main()
 {
     print ('a', 4);
-    Halt();
+    return 13;
 }
