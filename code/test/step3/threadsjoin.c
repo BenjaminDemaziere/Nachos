@@ -43,7 +43,6 @@ int main ()
     UserThreadJoin(t2);
     PutString("Main a fini d'attendre t2\n");
 
-
-
+    return 0;
 }
 

@@ -19,14 +19,15 @@ void affichage(void * str) {
     PutString(s);
     stop = 1;
     UserThreadExit();
-
 }
 
 int main ()
 {
-    // PutString("Début test thread\n");
-    int t = UserThreadCreate(affichage,"Affichage\n");
+    // PutString("Debut test thread\n");
+    UserThreadCreate(affichage,"Affichage\n");
     // int g = UserThreadCreate(affichage,"Affichage\n");
 
     while(stop==0);
+
+    return 0;
 }

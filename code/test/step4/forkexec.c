@@ -1,7 +1,8 @@
 #include "syscall.h"
-main(){
-  int a = ForkExec("./makethreads");
-  int b = ForkExec("./makethreads");
+int main(){
+  
+  ForkExec("./makethreads");
+  ForkExec("./makethreads");
 
   return 0;
 }

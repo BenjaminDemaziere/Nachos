@@ -12,8 +12,11 @@ void f(void *s){
   for (i = 0; i < N; i++)
     puts((char *)s);
 }
-main(){
-  int i;
+
+int main()
+{
   UserThreadCreate(f, (void *) THIS);
   f((void*) THAT);
+
+  return 0;
 }
