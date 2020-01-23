@@ -3,9 +3,16 @@
 #include "synchconsole.h"
 #include "synch.h"
 
+
+// Sémaphores utilisés pour l'intéraction avec la console
 static Semaphore *readAvail;
 static Semaphore *writeDone;
+
+// sémaphores utilisés pour garantir le bon fonctionnement des fonctions de lecture
+static Semaphore *getCharAvail;
 static Semaphore *getStringAvail;
+static Semaphore *getIntAvail;
+
 Console *console;
 
 static void ReadAvail (int arg)
@@ -21,27 +28,42 @@ SynchConsole::SynchConsole (char *readFile, char *writeFile)
 {
     readAvail = new Semaphore ("read avail", 0);
     writeDone = new Semaphore ("write done", 0);
+
+    getCharAvail = new Semaphore ("getchar available", 1);
     getStringAvail = new Semaphore ("getstring available", 1);
+    getIntAvail = new Semaphore ("getint available", 1);
+
     console = new Console (readFile, writeFile, ReadAvail, WriteDone, 0);
 }
 
 SynchConsole::~SynchConsole()
 {
-    delete console;
     delete writeDone;
     delete readAvail;
+
+    delete getCharAvail;
     delete getStringAvail;
+    delete getIntAvail;
+
+    delete console;
 }
 
 void SynchConsole::SynchPutChar (const char ch)
 {
 	console->PutChar (ch);
-	writeDone->P ();	// wait for write to finish
+	writeDone->P ();
 }
 char SynchConsole::SynchGetChar()
 {
-	readAvail->P ();	// wait for character to arrive
-	return console->GetChar ();
+	getCharAvail->P();
+
+    readAvail->P ();
+    
+    char ch = console->GetChar();
+
+    getCharAvail->V();
+
+	return ch;
 }
 void SynchConsole::SynchPutString (const char string[])
 {
@@ -56,12 +78,11 @@ void SynchConsole::SynchGetString (char * string, unsigned max)
 {
     ASSERT(string != NULL && max > 0 && max <= MAX_STRING_SIZE);
 
-    DEBUG('a', "Entrée dans SynchGetString, string = %s et max = %u\n", string, max);
+    DEBUG('a', "Entrée dans SynchGetString, string : %s et max : %u\n", string, max);
+    
+    getStringAvail->P();
     
     unsigned index = 0;
-
-    getStringAvail->P();
-
     char ch = SynchGetChar();
 
     if (ch == EOF)
@@ -91,7 +112,7 @@ void SynchConsole::SynchGetString (char * string, unsigned max)
     getStringAvail->V();
 }
 
-void SynchConsole::SynchPutInt (int val)
+void SynchConsole::SynchPutInt (const int val)
 {
     char * buffer = new char[MAX_STRING_SIZE];
 
@@ -101,19 +122,18 @@ void SynchConsole::SynchPutInt (int val)
     delete [] buffer;
 }
 
-void SynchConsole::SynchGetInt (int *ref)
+void SynchConsole::SynchGetInt (int * ref)
 {
     ASSERT(ref != NULL);
 
-    DEBUG('a', "Entrée dans SynchGetInt, ref = %p\n", (void *) ref);
+    getIntAvail->P();
 
     char * buffer = new char[MAX_STRING_SIZE];
 
     SynchGetString (buffer, MAX_STRING_SIZE);
-
-    DEBUG('a', "Retour dans SynchGetInt, ref = %p\n", (void *) ref);
-    
     sscanf (buffer, "%d", ref);
+
+    getIntAvail->V();
     
     delete [] buffer;
 }

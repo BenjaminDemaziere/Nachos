@@ -135,9 +135,9 @@ void Fork (void (*func) ());
 void Yield ();
 
 
-void PutChar (char ch);
+void PutChar (const char ch);
 void PutString (const char[]);
-void PutInt (int value);
+void PutInt (const int value);
 
 char GetChar();
 void GetString (char * string, unsigned max);

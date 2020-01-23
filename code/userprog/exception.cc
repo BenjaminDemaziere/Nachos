@@ -75,16 +75,11 @@ ExceptionHandler (ExceptionType which)
 		{
 			case SC_Exit :
 			{
-				if (machine->ReadRegister (4) != 0)
-				{
-					printf("Retour différent de 0, erreur dans le programme. Terminaison...\n");
-					interrupt->Halt();
-				}
-				else
-				{
-					printf("Fin du programme utilisateur avec code retour 0\n");
-				}
-				
+				synchconsole->SynchPutString (machine->ReadRegister (4) != 0 ? \
+					"Retour différent de 0, erreur dans le programme. Terminaison...\n" : \
+					"Fin du programme utilisateur avec code retour 0\n");
+				interrupt->Halt();
+
 				break;
 			}
 			
@@ -122,7 +117,7 @@ ExceptionHandler (ExceptionType which)
 				unsigned size = (unsigned) machine->ReadRegister (5);
 				
 				synchconsole->SynchGetString (buffer, size);
-				DEBUG('a', "buffer = %s\n", buffer);
+				DEBUG('a', "buffer : %s\n", buffer);
 
 				copyStringToMachine (machine->ReadRegister (4), buffer, size);
 
@@ -137,12 +132,20 @@ ExceptionHandler (ExceptionType which)
 			}
 			case SC_GetInt :
 			{
-				int phyAddr;
+				int localStorage;
 
-				DEBUG('a', "Entrée dans SC_GetInt, arg = %d\n", machine->ReadRegister (4));
+				synchconsole->SynchGetInt (&localStorage);
 
-				machine->Translate(machine->ReadRegister (4), &phyAddr, (int) sizeof (int), TRUE);
-				synchconsole->SynchGetInt ((int *) phyAddr);
+				DEBUG('a', "Retour de SynchGetInt, valeur lue = %d\n", localStorage);
+
+				machine->WriteMem (machine->ReadRegister (4), (int) sizeof (int), localStorage);
+
+				// Le résultat de l'appel système devrait être mis dans le registre 2
+				// Cependant la forme de l'appel système void SynchGetInt (int *)
+				// laisse penser qu'on veut le résultat dans l'adresse fournie en paramètre
+				// et il n'a de toute façon pas de type de retour.
+				//
+				// machine->WriteRegister (2, localStorage);
 
 				break;
 			}
