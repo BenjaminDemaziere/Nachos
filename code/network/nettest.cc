@@ -21,6 +21,7 @@
 #include "system.h"
 #include "network.h"
 #include "post.h"
+#include "socketTCP.h"
 #include "interrupt.h"
 
 // Test out message delivery, by doing the following:
@@ -30,27 +31,28 @@
 //	4. wait for an acknowledgement from the other machine to our 
 //	    original message
 
-void
-MailTest(int farAddr)
-{
     PacketHeader outPktHdr, inPktHdr;
     MailHeader outMailHdr, inMailHdr;
     const char *data = "Hello there!";
     const char *ack = "Got it!";
     char buffer[MaxMailSize];
 
+
+void sendReceive(int farAddr) {
     // construct packet, mail header for original message
     // To: destination machine, mailbox 0
     // From: our machine, reply to: mailbox 1
     outPktHdr.to = farAddr;		
     outMailHdr.to = 0;
-    outMailHdr.from = 1;
+    outMailHdr.from = 0;
     outMailHdr.length = strlen(data) + 1;
 
     // Send the first message
+    printf("Send message\n");
     postOffice->Send(outPktHdr, outMailHdr, data); 
 
     // Wait for the first message from the other machine
+    printf("Rec message");
     postOffice->Receive(0, &inPktHdr, &inMailHdr, buffer);
     printf("Got \"%s\" from %d, box %d\n",buffer,inPktHdr.from,inMailHdr.from);
     fflush(stdout);
@@ -63,9 +65,121 @@ MailTest(int farAddr)
     postOffice->Send(outPktHdr, outMailHdr, ack); 
 
     // Wait for the ack from the other machine to the first message we sent.
-    postOffice->Receive(1, &inPktHdr, &inMailHdr, buffer);
+    postOffice->Receive(0, &inPktHdr, &inMailHdr, buffer);
     printf("Got \"%s\" from %d, box %d\n",buffer,inPktHdr.from,inMailHdr.from);
     fflush(stdout);
+}
+
+
+
+// int i;
+// void p(int dummy) {
+//     i++;
+//     if(i%100000==0) {
+//         printf("Interruption\n");
+//     }
+// }
+    void fun(int arg) {
+        printf("BJR \n");
+    }
+void
+MailTest(int farAddr)
+{
+
+    // for(int i=0;i<10;i++)
+    //     sendReceive(farAddr);
+    // // Timer * t = new Timer(p,(int)t,0);
+    // // interrupt->SetLevel(IntOff);
+    // // currentThread->Sleep();
+
+    // if(farAddr==0) {
+    //     printf("0000\n");
+
+    //     SocketClientTCP * s = new SocketClientTCP();
+    //     s->mailHeader.to = 0;
+    //     s->mailHeader.from = 0;
+    //     s->packetHeader.to = 0;
+    //     s->packetHeader.from = 1;
+
+
+    //     const char * buf = "PTDR\n";
+
+    //     for(int i=0;i<10;i++) {
+    //         s->Write(buf,6);
+    //         printf("Envoie\n");
+    //     }
+
+    // }
+    // else if(farAddr==1) {
+    //     printf("1111\n");
+
+    //     SocketClientTCP * s = new SocketClientTCP();
+    //     s->portSrc = 0;
+    //     s->mailHeader.to = 0;
+    //     s->mailHeader.from = 0;
+    //     s->packetHeader.to = 1;
+    //     s->packetHeader.from = 0;
+
+    //     char t[200];
+    //     for(int i=0;i<10;i++) {
+    //         s->Read(t,6);
+
+    //         printf("%s",t);
+    //     }
+
+    // }
+
+
+
+
+    if(farAddr==0) {
+        printf("Client\n");
+
+        SocketClientTCP * s = new SocketClientTCP();
+        s->Connect(0,1);
+        // s->mailHeader.to = 0;
+        // s->mailHeader.from = 0;
+
+        // s->packetHeader.to = 0;
+        // s->packetHeader.from = 1 ;
+
+        printf("Connect\n");
+
+
+        const char * buf = "PTDR T QUI BRO, J'TE CONNAIS PAS MOI\n";
+
+        for(int i=0;i<10;i++) {
+            s->Write(buf,38);
+        }
+
+    }
+    //Le serveur est à l'adresse 0
+    else if(farAddr==1) {
+        printf("Serveur\n");
+        SocketServerTCP * serveur = new SocketServerTCP();
+
+        SocketClientTCP * s = serveur->Accept(1);
+        // SocketClientTCP * s = new SocketClientTCP();
+        // s->mailHeader.to = 0;
+        // s->mailHeader.from = 0;
+
+        // s->packetHeader.to = 1;
+        // s->packetHeader.from = 0; 
+
+
+        printf("Accept\n");
+        char t[200];
+        for(int i=0;i<1000;i++) {
+
+            s->Read(t,38);
+            printf("%s",t);
+        }
+
+    }
+
+
+
+
 
     // Then we're done!
     interrupt->Halt();

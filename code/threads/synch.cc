@@ -98,43 +98,125 @@ Semaphore::V ()
     (void) interrupt->SetLevel (oldLevel);
 }
 
+int Semaphore::getValue() {
+    return value;
+}
+
 // Dummy functions -- so we can compile our later assignments 
 // Note -- without a correct implementation of Condition::Wait(), 
 // the test case in the network assignment won't work!
 Lock::Lock (const char *debugName)
 {
+    name = debugName;
+    state = FREE;
+    listWaitingThreads = new List;
+    threadOwner = NULL;
+    numberLock = 0;
 }
 
 Lock::~Lock ()
 {
+    delete listWaitingThreads;
 }
 void
 Lock::Acquire ()
 {
+    IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
+
+    if(currentThread == threadOwner) { //Si le thread qui a le verrou veut le reprendre
+        numberLock ++;
+    }
+    else {
+        while (state == BUSY) { 
+            listWaitingThreads->Append((void *) currentThread);	// so go to sleep
+            currentThread->Sleep ();
+        }
+        //Verrou disponible
+        numberLock = 1;
+        state = BUSY;
+        threadOwner = currentThread;
+    }
+
+    (void) interrupt->SetLevel (oldLevel);	// re-enable interrupts
 }
 void
 Lock::Release ()
 {
+    IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
+
+    if(currentThread == threadOwner) { //Si le thread qui a le verrou veut le libérer
+        numberLock --;
+        if(numberLock==0) { //Le thread a fait autant de fois release que lock
+            state = FREE;
+            threadOwner = NULL;
+            Thread * thread = (Thread *) listWaitingThreads->Remove(); //Récupère un thread en attente
+            if (thread != NULL) { //S'il y en a un, on lance le thread
+                scheduler->ReadyToRun(thread);
+            }
+        }
+    }
+
+    (void) interrupt->SetLevel (oldLevel);	// re-enable interrupts
+}
+
+bool Lock::isHeldByCurrentThread () {
+    return currentThread == threadOwner;
 }
 
 Condition::Condition (const char *debugName)
 {
+    name = debugName;
+    listWaitingThreads = new List;
+
 }
 
 Condition::~Condition ()
 {
+    delete listWaitingThreads;
 }
 void
 Condition::Wait (Lock * conditionLock)
 {
-    ASSERT (FALSE);
+    IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
+
+    if(conditionLock->isHeldByCurrentThread()) {
+        listWaitingThreads->Append((void *) currentThread); //On fait attendre le thread
+        conditionLock->Release(); //Relache le verrou
+        currentThread->Sleep ();
+        //Quand le thread est de nouveau actif il reprend le verrou
+        conditionLock->Acquire();
+    }
+
+    (void) interrupt->SetLevel (oldLevel);	// re-enable interrupts
 }
 
 void
 Condition::Signal (Lock * conditionLock)
 {
+    IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
+
+    if(conditionLock->isHeldByCurrentThread()) {
+        Thread * thread = (Thread *) listWaitingThreads->Remove (); //Récupère un thread en attente
+        if (thread != NULL) { //S'il y en a un, on lance le thread
+            scheduler->ReadyToRun(thread);
+        } 
+    }
+    (void) interrupt->SetLevel (oldLevel);	// re-enable interrupts
+
 }
 void
 Condition::Broadcast (Lock * conditionLock)
 {
+    IntStatus oldLevel = interrupt->SetLevel (IntOff);	// disable interrupts
+
+    if(conditionLock->isHeldByCurrentThread()) {
+        //Réveille tous les thread en attente
+        Thread * thread = (Thread *) listWaitingThreads->Remove ();
+        while(thread != NULL) {
+            scheduler->ReadyToRun(thread);
+            thread = (Thread *) listWaitingThreads->Remove ();
+        }
+    }
+    (void) interrupt->SetLevel (oldLevel);	// re-enable interrupts
+
 }

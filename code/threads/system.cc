@@ -36,6 +36,7 @@ FrameProvider *frameprovider; //Allocateur de pages physiques(étape 4)
 
 #ifdef NETWORK
 PostOffice *postOffice;
+BitMap * portUsed;
 #endif
 
 
@@ -173,7 +174,9 @@ Initialize (int argc, char **argv)
 #endif
 
 #ifdef NETWORK
-    postOffice = new PostOffice (netname, rely, 10);
+    postOffice = new PostOffice (netname, rely, NumberBoxMail);
+	portUsed = new BitMap(NumberBoxMail);
+
 #endif
 }
 
@@ -187,6 +190,7 @@ Cleanup ()
     printf ("\nCleaning up...\n");
 #ifdef NETWORK
     delete postOffice;
+	delete portUsed;
 #endif
 
 #ifdef USER_PROGRAM

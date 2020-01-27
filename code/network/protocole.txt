@@ -1,0 +1,46 @@
+
+Connexion TCP:
+
+
+Deux ordis client et serveur
+
+Ouverture d'une connexion:
+Serveur: "Listen"
+Client: "Connect" envoie Syn
+Serveur: reçoit Syn envoie SynAck
+Client: reçoit SynAck, envoie Ack
+Serveur: reçoit Ack
+->La connexion est ouverte
+
+
+Le serveur et le client peuvent instancier la fermeture
+Fermeture de connexion (simplifiée):
+M1: "Close", envoie Fin
+M2: reçoit Fin, envoie Ack
+M2: "Close", envoie Fin
+M1: reçoit Fin, envoie Ack
+M2: reçoit Ack
+->La connexion est fermée
+
+
+
+Envoie un paquet (Type:Data):
+attend la réception d'un paquet d'acquittement (Type:Ack)
+On ne peut pas envoyer un paquet tant que le paquet précédent n'a pas été acquitté !
+
+
+
+Reçoit un paquet (Type:Data):
+envoie automatiquement un Ack
+Attention ce paquet peut être perdu, l'envoyeur doit donc envoyer de nouveau le message reçu
+Il ne faut pas reprendre le paquet de nouveau renvoyé
+
+
+Paquet doublon:
+envoie Paquet
+reçoit paquet -> envoie Ack -> se perd
+-> Réenvoie le paquet -> envoie Ack (ne pas mettre le paquet dans le buffer message)
+
+NumAck dans le paquet Ack
+-> Quand on reçoit un paquet: regarde si on l'a déjà reçu ()
+
