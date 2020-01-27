@@ -257,6 +257,24 @@ Thread::Sleep ()
     scheduler->Run (nextThread);	// returns when we've been signalled
 }
 
+//Fonction de réveille du thread utiliser dans wait
+void ThreadWait(int arg) {
+    Thread * t = (Thread *) arg;
+    IntStatus oldLevel = interrupt->SetLevel (IntOff);
+    scheduler->ReadyToRun (t);	// ReadyToRun assumes that interrupts 
+    // are disabled!
+    (void) interrupt->SetLevel (oldLevel);
+}
+
+//Nombre de tick pendant lesquels le thread dort
+void Thread::Wait(int time)
+{
+    IntStatus oldLevel = interrupt->SetLevel (IntOff);
+    interrupt->Schedule(ThreadWait,(int)this,time,TimerInt);
+    currentThread->Sleep(); //Endort le thread
+    (void) interrupt->SetLevel (oldLevel);
+}
+
 //----------------------------------------------------------------------
 // ThreadFinish, InterruptEnable, ThreadPrint
 //      Dummy functions because C++ does not allow a pointer to a member
