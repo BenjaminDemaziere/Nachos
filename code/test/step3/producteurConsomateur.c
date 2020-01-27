@@ -13,8 +13,7 @@ sem_t vide;
 sem_t plein;
 
 
-#define NB 10
-int objet[NB];
+#define NB 5 //nombre max d'élément
 int nbElement=0;
 
 void produire() {
@@ -28,9 +27,6 @@ void produire() {
     SemaphoreV(&vide);
 
 }
-
-
-
 
 
 void consommer() {
@@ -51,7 +47,7 @@ void consommer() {
 
 void consommateur() {
     int i=0;
-    while(i<10) {
+    while(i<20) {
         consommer();
         i++;
     }
@@ -60,7 +56,7 @@ void consommateur() {
 
 void producteur() {
     int i=0;
-    while(i<10) {
+    while(i<20) {
         produire();
         i++;
     }
@@ -74,16 +70,12 @@ int main ()
     SemaphoreInit(&vide,0);
     SemaphoreInit(&plein,NB);
 
-
-
     PutString("Début test sem\n");
 
     t1=UserThreadCreate(consommateur,0);
     t2=UserThreadCreate(consommateur,0);
     t3=UserThreadCreate(producteur,0);
     t4=UserThreadCreate(producteur,0);
-
-
 
     UserThreadJoin(t1);
     UserThreadJoin(t2);    
