@@ -20,6 +20,8 @@
 ./nachos-mynetwork  -m 0 -o 1 -l 0.7 -d r
 ./nachos-mynetwork  -m 1 -o 0 -l 0.7 -d r
 */
+#include <exception>
+
 
 #include "copyright.h"
 
@@ -139,46 +141,48 @@ MailTest(int farAddr)
         printf("Client\n");
 
         SocketClientTCP * s = new SocketClientTCP();
-        s->Connect(0,1);
-        // s->mailHeader.to = 0;
-        // s->mailHeader.from = 0;
-
-        // s->packetHeader.to = 0;
-        // s->packetHeader.from = 1 ;
-
-        printf("Connect\n");
+        int ret = s->Connect(0,1);
+        if(ret==1) {
+            printf("Connect\n");
 
 
-        const char * buf = "PTDR T QUI BRO\n";
-        for(int i=0;i<10;i++) {
-            s->Write(buf,16);
+            const char * buf = "PTDR T QUI BRO\n";
+            for(int i=0;i<10;i++) {
+                s->Write(buf,16);
+            }
+
+            s->Close();
         }
-
-        s->Close();
+        else {
+            printf("Can't connect\n");
+        }
 
     }
     //Le serveur est à l'adresse 0
     else if(farAddr==1) {
         printf("Serveur\n");
-        SocketServerTCP * serveur = new SocketServerTCP();
+            SocketServerTCP * sserveur = new SocketServerTCP(2);
+            SocketServerTCP * serveur = NULL;
 
-        SocketClientTCP * s = serveur->Accept(1);
-        // SocketClientTCP * s = new SocketClientTCP();
-        // s->mailHeader.to = 0;
-        // s->mailHeader.from = 0;
+        try{
+            serveur = new SocketServerTCP(1);
+            SocketClientTCP * s = serveur->Accept();
 
-        // s->packetHeader.to = 1;
-        // s->packetHeader.from = 0; 
-
-
-        printf("Accept\n");
-        char t[200];
-        int ret;
-        for(int i=0;i<1000 && ret!=0;i++) {
-
-            ret = s->Read(t,38);
-            printf("%s %d",t,ret);
+            printf("Accept\n");
+            char t[200];
+            int ret;
+            for(int i=0;i<1000 && ret!=0;i++) {
+                ret = s->Read(t,38);
+                printf("%s",t);
+            }
         }
+        catch(const std::exception& e)
+        {
+            printf("Erreur port déjà utilisé: %d\n",(int)serveur);
+        }
+        
+
+
 
     }
 

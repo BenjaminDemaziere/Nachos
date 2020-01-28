@@ -193,6 +193,16 @@ class Machine {
 	*/
 	void copyStringToMachine(char * str, int to, int size);
 
+	/*	(étape 6)
+		Copy data from MIPS to LINUX
+	*/
+	void copyDataFromMachine( int from, char *to, unsigned size);
+
+	/*	(étape 6)
+		Copy data from LINUX to MIPS
+	*/
+	void copyDataToMachine(char * str, int to, int size);
+
   private:
     bool singleStep;		// drop back into the debugger after each
 				// simulated instruction

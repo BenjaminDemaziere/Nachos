@@ -26,16 +26,19 @@ class SocketClientTCP  {
         ~SocketClientTCP();
 
         //Ouvre la connexion vers le serveur d'adresse addrServer
-        void Connect(NetworkAddress addrServer, MailBoxAddress port);
+        //Renvoie 1 si la connexion s'est ouverte
+        //0 si la connexion a echoué
+        int Connect(NetworkAddress addrServer, MailBoxAddress port);
 
 
         //Envoie data qui a une taille size au destinataire de la socket
-        void Write(const char *data, int size);
+        //renvoie 0 si l'envoie a echoué
+        int Write(const char *data, int size);
 
         void Write1Packet(const char *data, int size);
 
         //Met les données reçue dans data avec une taille max de size
-        //Renvoie le nombre d'octets lus
+        //Renvoie le nombre d'octets lus, 0 si la connection a été fermée
         int Read(char *data, int size);
 
         //Ferme la connexion
@@ -61,20 +64,21 @@ class SocketClientTCP  {
         int numPacketReceived; //Le numéro du prochain paquet data qu'on doit recevoir
 
         int nbrResend; //Nombre de fois qu'on a essayé d'envoyer le paquet
-        int synAckReceived;
+        int synAckReceived; //Si on a reçu un synAck
         int portServer;
 
-        bool connectionClosed;
+        bool connectionClosed; //Si la connection a été fermé par la socket distante
+        bool errorSend; //Si on a atteint max réémission
 };
 
 class SocketServerTCP  {
     public:
-        SocketServerTCP();
+        SocketServerTCP(int portS);
         ~SocketServerTCP();
 
         //Attend qu'une demande de connection soit faite sur le port
         //Retourne une socket client
-        SocketClientTCP * Accept(int port);
+        SocketClientTCP * Accept();
 
         void GetPacket();
 

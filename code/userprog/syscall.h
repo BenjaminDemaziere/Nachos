@@ -47,6 +47,16 @@
 #define SC_ForkExec 40
 
 
+#define SC_SocketCreate 50
+#define SC_SocketServerCreate 56
+#define SC_SocketClose 51
+#define SC_SocketSend 52
+#define SC_SocketReceive 53
+#define SC_SocketAccept 54
+#define SC_SocketConnect 55
+
+
+
 #ifdef IN_USER_MODE
 
 // LB: This part is read only on compiling the test/*.c files.
@@ -194,6 +204,41 @@ void SemaphoreFree(sem_t * sem);
 étape 4, création d'un nouveau processus
 */
 int ForkExec(char *s);
+
+
+
+/*
+étape 6, réseau
+*/
+typedef struct socket_t {
+    int socket; //La socket sémaphore
+}socket_t;
+
+//Créer une socket
+void SocketCreate(socket_t * socket);
+//Se connecte au serveur à l'adresse adr, et au port
+int SocketConnect(socket_t * socket,int adr,int port); 
+
+
+//Créer une socket serveur sur le port donné 
+int SocketServerCreate(socket_t * socket,int port);
+
+//Accepte une connection sur le port donné plus haut
+// clientResponse est la socket qui permettra de communiquer avec le client
+int SocketAccept(socket_t * socket,socket_t * clientResponse); 
+
+
+//Ferme la socket
+void SocketClose(socket_t * socket); 
+
+//Envoie et réception de données sur la socket
+int SocketSend(socket_t * socket,char * data,int size); 
+int SocketReceive(socket_t * socket,char * data, int size); 
+
+
+
+
+
 
 
 #endif // IN_USER_MODE

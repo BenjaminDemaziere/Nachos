@@ -21,12 +21,16 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 
+#include <exception>
+
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
 #include "userthread.h"
 #include "utility.h"
 #include "synch.h"
+#include "../network/socketTCP.h"
+
 
 
 extern int nbprocess;
@@ -259,6 +263,139 @@ ExceptionHandler (ExceptionType which)
               machine->WriteRegister(2, 0); // On écrit la valeur de retour
               currentThread->Yield();
               break;
+            }
+
+
+            case SC_SocketCreate: {
+                DEBUG('a', "SocketCreate, initiated by user program.\n");
+                int userSock = machine->ReadRegister(4); //Adresse utilisateur
+
+                SocketClientTCP * sock = new SocketClientTCP(); //Création de la socket système
+
+                machine->WriteMem(userSock,4,(int)sock); //Ecrit dans le coté utilisateur l'adresse de la socket système
+
+                break;
+            }
+
+
+            case SC_SocketServerCreate: {
+                DEBUG('a', "SocketServerCreate, initiated by user program.\n");
+                int userSock = machine->ReadRegister(4); //Adresse utilisateur
+                int port = machine->ReadRegister(5); //Port de la connexion
+
+                SocketServerTCP * sock = NULL;
+                try{
+                    sock = new SocketServerTCP(port);
+
+                }
+                catch(const std::exception& e)
+                {
+                    DEBUG('a', "SocketServerCreate, port already used\n");
+                }
+                machine->WriteMem(userSock,4,(int)sock); //Ecrit dans le coté utilisateur l'adresse de la socket système
+                break;
+            }
+
+
+            case SC_SocketClose: {
+                DEBUG('a', "SocketClose, initiated by user program.\n");
+                int userSock = machine->ReadRegister(4); //Adresse utilisateur
+
+                int adrSock;
+                machine->ReadMem(userSock,4,&adrSock); //Lit l'adresse du sémaphore système
+                SocketClientTCP * sock = (SocketClientTCP *) adrSock;
+
+                sock->Close();
+                break;
+            }
+
+            case SC_SocketSend: {
+                DEBUG('a', "SocketSend, initiated by user program.\n");
+                int userSock = machine->ReadRegister(4); //Adresse utilisateur
+                int dataUser = machine->ReadRegister(5); //Donnée à envoyer
+                int size = machine->ReadRegister(6); //Taille des données
+
+                int adrSock;
+                machine->ReadMem(userSock,4,&adrSock); //Lit l'adresse de la socket système
+                SocketClientTCP * sock = (SocketClientTCP *) adrSock;
+
+                char * data = new char[size]; //Les données à envoyer
+                machine->copyDataFromMachine(dataUser,data,size); //récupère les données depuis le programme utilisateur
+
+                printf("Taille:%d data:%s\n",size,data);
+
+                int ret = sock->Write(data,size);
+                machine->WriteRegister(2,ret); //Le nombre d'octets écrits
+
+                delete data;
+                break;
+            }
+
+            case SC_SocketReceive: {
+                DEBUG('a', "SocketReceive, initiated by user program.\n");
+                int userSock = machine->ReadRegister(4); //Adresse utilisateur
+                int dataUser = machine->ReadRegister(5); //Pointeur des données où on doit stocker
+                int size = machine->ReadRegister(6); //Taille des données à recevoir
+
+                int adrSock;
+                machine->ReadMem(userSock,4,&adrSock); //Lit l'adresse de la socket système
+                SocketClientTCP * sock = (SocketClientTCP *) adrSock;
+
+                char * data = new char[size]; //Les données à recevoir
+
+                int ret = sock->Read(data,size);
+                machine->copyDataToMachine(data,dataUser,size); //Met les données dans le programme utilisateur
+
+
+                machine->WriteRegister(2,ret); //Le nombre d'octets lus
+
+                delete data;
+                break;
+            }
+
+            case SC_SocketAccept: {
+                DEBUG('a', "SocketAccept, initiated by user program.\n");
+                int userSock = machine->ReadRegister(4); //Adresse utilisateur
+                int userSockResponse = machine->ReadRegister(5); //Adresse utilisateur de la socket reponse
+
+
+                int adrSockServ;
+                machine->ReadMem(userSock,4,&adrSockServ); //Lit l'adresse de la socket système
+                SocketServerTCP * sock = (SocketServerTCP *) adrSockServ;
+
+                int adrSockResp;
+                machine->ReadMem(userSockResponse,4,&adrSockResp); //Lit l'adresse de la socket système
+                SocketClientTCP * sockClient = (SocketClientTCP *) adrSockResp;
+
+                sockClient = sock->Accept();
+                if(sockClient ==NULL) {
+                    DEBUG('a', "SocketAccept, failed return a null socket\n");
+                    machine->WriteRegister(2,0); //Accept fonctionne pas
+                }
+                else {
+                    machine->WriteMem(userSockResponse,4,(int)sockClient); //Ecrit dans le coté utilisateur l'adresse de la socket système
+                    machine->WriteRegister(2,1); //Accept ok
+                }
+
+
+
+                break;
+            }
+
+            case SC_SocketConnect: {
+                DEBUG('a', "SocketConnect, initiated by user program.\n");
+                int userSock = machine->ReadRegister(4); //Adresse utilisateur
+                int adr = machine->ReadRegister(5); //Adresse du serveur
+                int port = machine->ReadRegister(6); //Port du serveur
+
+
+                int adrSock;
+                machine->ReadMem(userSock,4,&adrSock); //Lit l'adresse de la socket système
+                SocketClientTCP * sock = (SocketClientTCP *) adrSock;
+
+                int ret = sock->Connect(adr,port); //ret = 1 si la connection s'est bien passé, 0 si pas réussi à se connecter
+                machine->WriteRegister(2,ret);
+                break;
             }
 
 

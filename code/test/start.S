@@ -242,6 +242,62 @@ ForkExec:
   j	$31
   .end ForkExec
 
+  	.globl SocketCreate
+	.ent SocketCreate
+SocketCreate:
+	addiu $2,$0,SC_SocketCreate
+	syscall
+	j	$31
+	.end SocketCreate
+
+	.globl SocketServerCreate
+	.ent SocketServerCreate
+SocketServerCreate:
+	addiu $2,$0,SC_SocketServerCreate
+	syscall
+	j	$31
+	.end SocketServerCreate
+
+	.globl SocketClose
+	.ent SocketClose
+SocketClose:
+	addiu $2,$0,SC_SocketClose
+	syscall
+	j	$31
+	.end SocketClose
+
+	.globl SocketSend
+	.ent SocketSend
+SocketSend:
+	addiu $2,$0,SC_SocketSend
+	syscall
+	j	$31
+	.end SocketSend
+
+	.globl SocketReceive
+	.ent SocketReceive
+SocketReceive:
+	addiu $2,$0,SC_SocketReceive
+	syscall
+	j	$31
+	.end SocketReceive
+
+	.globl SocketAccept
+	.ent SocketAccept
+SocketAccept:
+	addiu $2,$0,SC_SocketAccept
+	syscall
+	j	$31
+	.end SocketAccept
+
+	.globl SocketConnect
+	.ent SocketConnect
+SocketConnect:
+	addiu $2,$0,SC_SocketConnect
+	syscall
+	j	$31
+	.end SocketConnect
+
 
 /* dummy function to keep gcc happy */
         .globl  __main

@@ -273,3 +273,19 @@ void Machine::copyStringToMachine(char * str, int to, int size) {
 		i++;
 	}
 }
+
+void Machine::copyDataFromMachine(int from, char *to, unsigned size) {
+	int c;
+	for(int i = 0;i<(int)size-1;i++) {
+		ReadMem(from+i,1,&c); //Lecture de la mémoire de la machine
+		to[i]=c; //Met la valeur récupérer dans le tableau
+	}
+}
+
+void Machine::copyDataToMachine(char * str, int to, int size) {
+	for(int i=0;i<size;i++) {
+		WriteMem(to+i,1,str[i]); //Ecrit dans la mémoire MIPS
+	}
+}
+
+
