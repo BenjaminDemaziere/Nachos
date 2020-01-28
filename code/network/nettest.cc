@@ -16,6 +16,11 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+/*
+./nachos-mynetwork  -m 0 -o 1 -l 0.7 -d r
+./nachos-mynetwork  -m 1 -o 0 -l 0.7 -d r
+*/
+
 #include "copyright.h"
 
 #include "system.h"
@@ -79,9 +84,7 @@ void sendReceive(int farAddr) {
 //         printf("Interruption\n");
 //     }
 // }
-    void fun(int arg) {
-        printf("BJR \n");
-    }
+
 void
 MailTest(int farAddr)
 {
@@ -146,11 +149,12 @@ MailTest(int farAddr)
         printf("Connect\n");
 
 
-        const char * buf = "PTDR T QUI BRO, J'TE CONNAIS PAS MOI\n";
-
+        const char * buf = "PTDR T QUI BRO\n";
         for(int i=0;i<10;i++) {
-            s->Write(buf,38);
+            s->Write(buf,16);
         }
+
+        s->Close();
 
     }
     //Le serveur est à l'adresse 0
@@ -169,10 +173,11 @@ MailTest(int farAddr)
 
         printf("Accept\n");
         char t[200];
-        for(int i=0;i<1000;i++) {
+        int ret;
+        for(int i=0;i<1000 && ret!=0;i++) {
 
-            s->Read(t,38);
-            printf("%s",t);
+            ret = s->Read(t,38);
+            printf("%s %d",t,ret);
         }
 
     }

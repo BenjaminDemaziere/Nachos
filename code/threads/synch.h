@@ -71,7 +71,7 @@ class Semaphore
 // (because the value might change immediately after you read it).  
 
 
-enum LockSTate {BUSY,FREE};
+enum LockState {BUSY,FREE};
 
 class Lock
 {
@@ -90,10 +90,11 @@ class Lock
     // holds this lock.  Useful for
     // checking in Release, and in
     // Condition variable ops below.
+    LockState getLockState();
 
   private:
     const char *name;		// for debugging
-    LockSTate state;
+    LockState state;
     Thread * threadOwner;
     List * listWaitingThreads;
     int numberLock; //Nombre de fois que le thread a appelé Lock

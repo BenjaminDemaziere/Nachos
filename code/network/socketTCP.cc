@@ -65,7 +65,10 @@ void SocketGetPacket(int socket) {
 SocketClientTCP::SocketClientTCP() {
     semSend = new Semaphore("Socket sem send",1);
     semAck = new Semaphore("Socket sem Ack",0);
+    semFinAck = new Semaphore("Socket sem FinAck",0);
     lock = new Lock("Socket lock");
+
+    connectionClosed = false;
 
     messages = new SynchList;
 
@@ -86,6 +89,7 @@ SocketClientTCP::~SocketClientTCP() {
     portUsed->Clear(mailHeader.from);//Port plus utilisé
     delete semSend;
     delete semAck;
+    delete semFinAck;
     delete threadGetPacket;
     delete messages; 
 }
@@ -140,14 +144,14 @@ void SocketClientTCP::Connect(NetworkAddress addrServer, int port) {
 void SocketClientTCP::Write(const char *data, int size) {
     lock->Acquire();
 
-    int sizePacket = size > MaxMailSize ? MaxMailSize : size;
+    int sizePacket = size > (int)MaxMailSize ? (int)MaxMailSize : size;
     int sizePacketTotal = 0;
     while(sizePacketTotal<size) {
         semSend->P(); //Il ne peut y avoir qu'un envoie de donnée par la socket
 
         Write1Packet(data+sizePacketTotal,sizePacket);
         sizePacketTotal += sizePacket;
-        sizePacket = size-sizePacketTotal > MaxMailSize ? MaxMailSize : size-sizePacketTotal;
+        sizePacket = size-sizePacketTotal > (int)MaxMailSize ? (int)MaxMailSize : size-sizePacketTotal;
         semSend->V();
 
     }
@@ -192,21 +196,56 @@ void SocketClientTCP::Write1Packet(const char *data, int size) {
 
 //Met les données reçues dans data avec une taille max de size
 int SocketClientTCP::Read(char *data, int size) {
+    //Peut lire des données si la connection n'est pas fermée ou s'il reste encore des données à lire
+    if(connectionClosed==false || !messages->IsEmpty()) {
+        DataPacket * d = (DataPacket *)messages->Remove(); //Récupère les données
+        if (d==NULL && connectionClosed==true) { //On a forcé le retour à cause du close
+            delete d;
+            DEBUG('r',"Read: force close\n");
+            return 0;
+        }
+        int s = size > d->size ? d->size : size;
+        bcopy(d->data,data,s);//Copie les données
 
-    DataPacket * d = (DataPacket *)messages->Remove(); //Récupère les données
-    int s = size > d->size ? size : d->size;
-    bcopy(d->data,data,s);//Copie les données
-
-    delete d->data;
-    delete d;
-    return s;
+        delete d->data;
+        delete d;
+        return s;
+    }
+    else { //Connection fermée
+        return 0;
+    }
 }
 
 //Ferme la connexion
 void SocketClientTCP::Close() {
+    lock->Acquire();
+    DEBUG('r',"Socket: close\n");
+    mailHeader.length = 0;
+    mailHeader.type = FIN;
+    mailHeader.numPacket = numPacket;
 
+    packetHeader.length = sizeof(mailHeader);
+    postOffice->Send(packetHeader, mailHeader, NULL);
 
+    DataPacket * d = new DataPacket;
+    d->size = 0;
+    d->data = NULL;
+    d->type = FIN;
+    d->numPacket = numPacket;
 
+    void **arg = new void*[2];
+    arg[0] = (void*)d;
+    arg[1] = (void*)this;
+    //Lance le timer de renvoie du packet
+    lock->Release();
+    interrupt->Schedule(ReSendPacket, int(arg), TEMPO ,TimerInt);
+    semFinAck->P(); //Attend l'accusé de réception (FINACK)
+    lock->Acquire();
+
+    lock->Release();
+    DEBUG('r',"Socket: close finish\n");
+
+    delete this;
 }
 
 
@@ -245,13 +284,41 @@ void SocketClientTCP::GetPacket() {
 
             lock->Release();
         }
+        else if(mailHdr.type==FINACK) {
+            lock->Acquire();
+            //Reçoit aquittement de fin de connection
+
+            semFinAck->V();
+
+            lock->Release();
+        }
+        //Reçoit une fin de connection de la part de l'autre socket
+        else if(mailHdr.type==FIN) {
+            lock->Acquire();
+            DEBUG('r',"Receive FIN\n");
+            //Envoie un acquittement de fin de connection
+            mailHdr.length = 0;
+            mailHdr.type = FINACK;
+            mailHdr.from = mailHeader.from;
+            mailHdr.to = mailHeader.to;
+            pktHdr.to = packetHeader.to;
+            pktHdr.from = packetHeader.from;
+            packetHeader.length = sizeof(mailHdr);
+            postOffice->Send(pktHdr, mailHdr, &dummy);
+
+            //La connection est fermée 
+            connectionClosed = true;
+            messages->StopRemove();
+
+            lock->Release();
+        }
         else if(mailHdr.type==DATA) { //Met les données et la taille dans la liste de message
 
             if(mailHdr.numPacket == numPacketReceived) { 
 
                 DataPacket * d = new DataPacket();
                 d->data = data;
-                d->size = mailHdr.length - sizeof(MailHeader);
+                d->size = mailHdr.length;
                 messages->Append(d);
                 numPacketReceived++;
                 DEBUG('r',"Paquet reçu\n");
@@ -261,6 +328,8 @@ void SocketClientTCP::GetPacket() {
                 DEBUG('r',"Paquet doublon reçu et jeté\n");
             }
             //Envoie d'un acquittement
+            //On n'utilise des variables locales pour envoyer l'acquittement
+            //Cela évite de prendre le verrou
             mailHdr.length = 0;
             mailHdr.type = ACK;
             mailHdr.from = mailHeader.from;

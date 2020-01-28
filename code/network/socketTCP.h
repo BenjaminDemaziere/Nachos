@@ -47,6 +47,7 @@ class SocketClientTCP  {
 
         Semaphore * semSend; //Sémaphore d'attente d'envoie de données 
         Semaphore * semAck; //Sémaphore d'attente de reception d'un acquittement
+        Semaphore * semFinAck;
         Lock *lock;
 
         PacketHeader  packetHeader;
@@ -62,6 +63,8 @@ class SocketClientTCP  {
         int nbrResend; //Nombre de fois qu'on a essayé d'envoyer le paquet
         int synAckReceived;
         int portServer;
+
+        bool connectionClosed;
 };
 
 class SocketServerTCP  {

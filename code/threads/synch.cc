@@ -163,6 +163,10 @@ bool Lock::isHeldByCurrentThread () {
     return currentThread == threadOwner;
 }
 
+LockState Lock::getLockState() {
+    return state;
+}
+
 Condition::Condition (const char *debugName)
 {
     name = debugName;

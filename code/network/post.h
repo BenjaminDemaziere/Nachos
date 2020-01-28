@@ -39,7 +39,7 @@ typedef int MailBoxAddress;
 // This is prepended to the message by the PostOffice, before the message 
 // is sent to the Network.
 
-enum TypePacket {DATA,ACK,FIN,SYN,SYNACK};
+enum TypePacket {DATA,ACK,FIN,SYN,SYNACK,FINACK};
 
 
 class MailHeader {

@@ -64,7 +64,7 @@ SynchList::Append (void *item)
 //      Remove an "item" from the beginning of the list.  Wait if
 //      the list is empty.
 // Returns:
-//      The removed item. 
+//      The removed item. Or NULL if StopRemove has been called
 //----------------------------------------------------------------------
 
 void *
@@ -73,10 +73,12 @@ SynchList::Remove ()
     void *item;
 
     lock->Acquire ();		// enforce mutual exclusion
-    while (list->IsEmpty ())
-	listEmpty->Wait (lock);	// wait until list isn't empty
+    inRemove = true;
+    while (list->IsEmpty() && inRemove==true){
+	    listEmpty->Wait (lock);	// wait until list isn't empty
+    }
     item = list->Remove ();
-    ASSERT (item != NULL);
+    // ASSERT (item != NULL);
     lock->Release ();
     return item;
 }
@@ -94,5 +96,22 @@ SynchList::Mapcar (VoidFunctionPtr func)
 {
     lock->Acquire ();
     list->Mapcar (func);
+    lock->Release ();
+}
+
+
+void SynchList::StopRemove() {
+    lock->Acquire();
+    //On relache le verrou pour que remove se termine
+    if(inRemove==true){ //Si un thread attend dans remove
+        inRemove = false;
+        listEmpty->Signal(lock);
+    }
+    lock->Release();
+}
+
+bool SynchList::IsEmpty() {
+    lock->Acquire ();
+    return list->IsEmpty();
     lock->Release ();
 }
