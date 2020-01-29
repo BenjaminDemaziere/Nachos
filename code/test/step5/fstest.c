@@ -27,24 +27,7 @@ int main(){
   UserMkFile("testFile",100);
   PutString("Affichage de testDir après création\n");
   UserListdir();
-  //PutString("=============================================================\n");
 
-  //Écriture dans testFile
-
-  //PutString("=============================================================\n");
-
-  //Affichage de testFile
-
-  //PutString("=============================================================\n");
-
-  //Test de OpenFile
-  PutString("Ouverture de testFile\n");
-  int fd = UserOpenFile("testFile");
-
-  PutString("=============================================================\n");
-  //Test de CloseFile
-  PutString("Fermeture de testFile\n");
-  UserCloseFile(fd);
 
   PutString("=============================================================\n");
 
