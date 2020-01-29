@@ -1,9 +1,6 @@
 #include "syscall.h"
 //Test de la limite de 10 fichiers ouverts
 int main(){
-  PutString("=============================================================\n");
-  PutString("Affichage du contenu de la racine\n");
-  UserListdir();
 
   PutString("=============================================================\n");
   PutString("Création et ouverture de 5 fichiers dans le répertoire racine\n");
@@ -58,6 +55,24 @@ int main(){
   UserListdir();
 
   PutString("=============================================================\n");
+  PutString("Tentative de réouverture de fichiers\n");
+  int fdAgain = UserOpenFile("testFile3");
+  PutInt(fdAgain);
+  if (fdAgain == -1){
+    PutString("Ouverture impossible, normal\n");
+  }else {
+    PutString("Ouverture effectuée, anormal\n");
+  }
+
+  int fdAgain2 = UserOpenFile("testFile4");
+  PutInt(fdAgain2);
+  if (fdAgain2 == -1){
+    PutString("Ouverture impossible, normal\n");
+  }else {
+    PutString("Ouverture effectuée, anormal\n");
+  }
+
+  PutString("=============================================================\n");
   PutString("Création d'un répertoire testDir qui contiendra les 5 fichiers suivants\n");
   int ret = UserMkdir("testDir");
   if (ret == 1) PutString("Erreur de création du répertoire\n");
@@ -110,17 +125,54 @@ int main(){
     PutString("Ouverture effectuée, normal\n");
   }
 
-  PutString("Affichage du contenu de testDir\n");
-  UserListdir();
   PutString("=============================================================\n");
-  PutString("Création du fichier en trop \n");
+  PutString("Création de fichiers en trop \n");
   UserMkFile("fileEnTrop",10);
-  int fdEnTrop = UserOpenFile("testFile9");
+  int fdEnTrop = UserOpenFile("fileEnTrop");
+  PutInt(fdEnTrop);
   if (fdEnTrop == -1){
-    PutString("Ouverture impossible\n");
+    PutString("Ouverture impossible, normal\n");
+  }else {
+    PutString("Ouverture effectuée, échec du test\n");
+  }
+  UserMkFile("fileEnTrop2",10);
+  int fdEnTrop2 = UserOpenFile("fileEnTrop2");
+  PutInt(fdEnTrop2);
+  if (fdEnTrop2 == -1){
+    PutString("Ouverture impossible, normal\n");
   }else {
     PutString("Ouverture effectuée, échec du test\n");
   }
   PutString("=============================================================\n");
+  PutString("Fermeture des fichiers\n");
+  UserCloseFile(fd0);
+  PutString("1\n");
+  UserCloseFile(fd1);
+  PutString("2\n");
+
+  UserCloseFile(fd2);
+  PutString("3\n");
+
+  UserCloseFile(fd3);
+  PutString("4\n");
+
+  UserCloseFile(fd4);
+  PutString("5\n");
+
+  UserCloseFile(fd5);
+  PutString("6\n");
+
+  UserCloseFile(fd6);
+  PutString("7\n");
+
+  UserCloseFile(fd7);
+  PutString("8\n");
+
+  UserCloseFile(fd8);
+  PutString("9\n");
+
+  UserCloseFile(fd9);
+  PutString("10\n");
+
 
 }

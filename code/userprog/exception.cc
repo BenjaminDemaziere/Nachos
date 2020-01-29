@@ -295,10 +295,11 @@ ExceptionHandler (ExceptionType which)
                 int adr = machine->ReadRegister(4); //On récupère l'adresse de la chaine
                 char * buf = new char[MAX_STRING_SIZE];
                 machine->copyStringFromMachine(adr,buf,MAX_STRING_SIZE); //Récupère la chaine dans buf
-                OpenFile * ret = fileSystem->Open(buf);
-                ret->GetHeader()->GenerateFd();
-                bool b = fileSystem->AddToFdTable(ret);
+                OpenFile * ret = fileSystem->Open(buf); //On ouvre le fichier
+                ret->GetHeader()->GenerateFd(); //On génère son descripteur
+                bool b = fileSystem->AddToFdTable(ret); //On l'ajoute à la table des fichiers
                 if(b){
+                  //currentThread->Open(ret);
                   machine->WriteRegister(2, ret->GetHeader()->GetFd());
                 }else{
                   machine->WriteRegister(2, -1);
@@ -310,6 +311,7 @@ ExceptionHandler (ExceptionType which)
                 DEBUG('a', "UserCloseFile, initiated by user program.\n");
                 int arg = machine->ReadRegister(4); //On récupère le fd à fermer
                 fileSystem->Close(arg);
+                //currentThread->Close(arg);
                 break;
             }
             default: {

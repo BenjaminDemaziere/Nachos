@@ -299,7 +299,6 @@ bool
 FileSystem::AddToFdTable(OpenFile * openFile)
 {
   if(openFile->GetHeader()->isDir){// On vérifie que le fichier ne soit pas un répertoire
-    delete openFile;
     return FALSE;
   }
 
@@ -308,7 +307,6 @@ FileSystem::AddToFdTable(OpenFile * openFile)
     //on vérifie si le fichier est déja ouvert
     if (fileTable[i] != NULL){
       if (fileTable[i]->GetHeader()->GetFd() == openFile->GetHeader()->GetFd()){
-        delete openFile;
         return FALSE;
       }
     }
@@ -317,8 +315,8 @@ FileSystem::AddToFdTable(OpenFile * openFile)
   for (int i = 0; i<NumMaxOpenedFiles;i++){
     if (fileTable[i] == NULL){ // On vérifie qu'il reste une place dans la table
       fileTable[i] = openFile; // On l'ajoute à la table
+      //currentThread->threadFileTable[i] = openFile;
       return TRUE;
-
     }
   }
 }
@@ -357,11 +355,14 @@ FileSystem::Open(const char *name)
 
 void FileSystem::Close(int fd){
   for (int i = 0; i<NumMaxOpenedFiles;i++){
-    if (fileTable[i]->GetHeader()->GetFd() == fd){ //on vérifie si le fichier est déja ouvert
-      OpenFile * o = fileTable[i];
-      fileTable[i] = NULL;
-      delete o;
-      break;
+    if(fileTable[i]!=NULL){
+      if (fileTable[i]->GetHeader()->GetFd() == fd){ //on vérifie si le fichier est déja ouvert
+        //if(currentThread->threadFileTable[i]->GetHeader()->GetFd() == fd){//on vérifie que le fichier est bien ouvert par le thread courant
+          fileTable[i] = NULL;
+          //currentThread->threadFileTable[i] = NULL;
+          break;
+      //}
+      }
     }
   }
 }
@@ -389,6 +390,7 @@ FileSystem::Remove(const char *name)
     FileHeader *fileHdr;
     int sector;
 
+
     directory = new Directory(NumDirEntries);
     directory->FetchFrom(currentDirFile);
     sector = directory->Find(name);
@@ -415,13 +417,35 @@ FileSystem::Remove(const char *name)
     return test;
 }
 
+char* FileSystem::Pathing(char* path){
+  int taille = strlen(path);
+  int pos =0;
+  if(path[pos]=='/'){
+    delete currentDirFile;
+    currentDirFile = new OpenFile(1);
+    pos ++;
+  }
+  char * buff = new char[10];
+  for(int j = 0 ; j<10 ; j++){
+    buff[j]='\0';
+  }
+  int i =0;
 
+  for(;pos<taille;pos++){
+    if(path[pos] == '/'){
+      this->Move(buff);
+      for(int j = 0 ; j<10 ; j++){
+        buff[j]='\0';
+      }
+      i = 0;
+      pos++;
+    }
+    buff[i]=path[pos];
+    i++;
+  }
 
-
-
-
-
-
+  return buff;
+}
 
 bool
 FileSystem::Move(const char *name)
