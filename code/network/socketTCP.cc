@@ -36,7 +36,7 @@ void ReSendPacket(int arg) {
 
     void ** tabarg = (void**) arg;
     SocketClientTCP * sock = (SocketClientTCP *) (tabarg[1]);
-    DEBUG('r',"Resent Packet\n");
+    // DEBUG('r',"Resent Packet\n");
 
     sock->lock->Acquire();
 
@@ -96,6 +96,8 @@ SocketClientTCP::~SocketClientTCP() {
     delete semAck;
     delete semFinAck;
     delete messages; 
+    postOffice->StopReceive(mailHeader.from); //Sert à arréter le thread threadGetPacket
+    // currentThread->Yield();
 }
 
 
@@ -292,6 +294,10 @@ void SocketClientTCP::GetPacket() {
         char * data = new char[MaxMailSize];
 
         postOffice->Receive(mailHeader.from,&pktHdr,&mailHdr,data); //Récupère les données
+        if (postOffice->HasStopReceive(mailHeader.from)) { //Si on a quitté le receive on termine le thread
+            DEBUG('r',"GetPacket: the thread finishes\n");
+            currentThread->Finish();
+        }
 
         if(mailHdr.type==ACK) {
             semAck->V(); //On a reçu un acquittement, on peut renvoyer un nouveau packet
@@ -407,12 +413,15 @@ SocketServerTCP::SocketServerTCP(int portS) {
         throw portAlreadyUsedExcpetion();
     }
     portUsed->Mark(port); //port utilisé
+
+
 }
 
 SocketServerTCP::~SocketServerTCP() {
     portUsed->Clear(mailHeader.from);//Port plus utilisé
     delete semAck;
     delete semSyn;
+    postOffice->StopReceive(port); //Sert à arréter le thread threadGetPacket
 }
 
 void SocketServerTCP::Close() {
@@ -432,10 +441,8 @@ SocketClientTCP * SocketServerTCP::Accept() {
     packetHeader.length = sizeof(mailHeader);
 
     //Thread pour récupérer les paquets
-    if(threadGetPacket==NULL) {
-        threadGetPacket = new Thread("thread server socket");
-        threadGetPacket->Fork(SocketServerGetPacket,(int)this);
-    }
+    threadGetPacket = new Thread("thread server socket");
+    threadGetPacket->Fork(SocketServerGetPacket,(int)this);
 
     /*
         Attente de demande de connection du client (SYN)
@@ -498,6 +505,10 @@ void SocketServerTCP::GetPacket() {
         char data[MaxMailSize];
 
         postOffice->Receive(port,&pktHdr,&mailHdr,data); //Récupère les données
+        if (postOffice->HasStopReceive(port)) { //Si on a quitté le receive
+            DEBUG('r',"GetPacket: the thread finishes\n");
+            currentThread->Finish();
+        }
 
         if(mailHdr.type==ACK) {
             DEBUG('r',"Server receive ACK\n");

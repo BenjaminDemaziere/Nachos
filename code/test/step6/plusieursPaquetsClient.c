@@ -38,12 +38,11 @@ int main() {
     //Reçoit du serveur
     int ret=1;
     char data[30];
-    while(ret!=0) {
+    while(ret>0) {
         ret = SocketReceive(&sock,data,30);
-        if (ret!=0) PutString(data);
+        if (ret>0) PutString(data);
     }
 
 
     SocketClose(&sock);
-
 }

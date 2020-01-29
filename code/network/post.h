@@ -95,8 +95,15 @@ class MailBox {
    				// Atomically get a message out of the 
 				// mailbox (and wait if there is no message 
 				// to get!)
+
+    //Quitte Get
+    void StopGet(); 
+    //Retourne true si on a fait appel à stopGet
+    bool HasStopGet();
+
   private:
     SynchList *messages;	// A mailbox is just a list of arrived messages
+    bool stopGet;
 };
 
 // The following class defines a "Post Office", or a collection of 
@@ -139,6 +146,8 @@ class PostOffice {
 				// off of network (i.e., time to call 
 				// PostalDelivery)
 
+    void StopReceive(int box);
+    bool HasStopReceive(int box);
 
     NetworkAddress netAddr;	// Network address of this machine
 

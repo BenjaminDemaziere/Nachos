@@ -78,8 +78,11 @@ SynchList::Remove ()
 	    listEmpty->Wait (lock);	// wait until list isn't empty
     }
     item = list->Remove ();
+
     // ASSERT (item != NULL);
     lock->Release ();
+    printf("IN REMOVE %d\n",(int)item);
+
     return item;
 }
 
