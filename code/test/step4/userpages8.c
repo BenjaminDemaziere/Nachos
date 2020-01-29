@@ -1,20 +1,18 @@
 #include "syscall.h"
-#define THIS "110 "
-#define THAT "111 "
-#define THOS "112 "
-#define THUS "113 "
-#define THES "114 "
+#define THIS "880 "
+#define THAT "881 "
+#define THOS "882 "
+#define THUS "883 "
+#define THES "884 "
 const int N = 10; // Choose it large enough!
 
 void f(void *s){
   int i;
   for (i = 0; i < N; i++)
     PutString((char*)s);
-
 }
-
-int main()
-{
+main(){
+  int i;
   UserThreadCreate(f, (void *) THIS);
   UserThreadCreate(f, (void *) THAT);
   UserThreadCreate(f, (void *) THOS);

@@ -1,6 +1,6 @@
 /*
-Partie 3
-test des threads
+Partie 4
+programme à faire run par un processus
 */
 
 
@@ -9,14 +9,8 @@ test des threads
 int stop = 0;
 
 void affichage(void * str) {
-    PutChar('a');
-    PutChar('\n');
 
-
-    PutString("AAAAAA\n");
-
-    char * s = (char *) str;
-    PutString(s);
+    PutString("Affichage du second processus !\n");
     stop = 1;
     UserThreadExit();
 }
