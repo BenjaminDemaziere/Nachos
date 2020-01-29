@@ -13,7 +13,7 @@ void thread_1() {
     while(i<100000) {
         i++;
     }
-    PutString("Fin thread\n");
+    PutString("Fin thread1\n");
     UserThreadExit();
 }
 

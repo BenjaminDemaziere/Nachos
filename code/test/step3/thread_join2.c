@@ -2,7 +2,7 @@
 
 /*
 Partie 3
-test de deux thread qui attendent un même thread 
+test de deux thread qui attendent un meme thread 
 
 Le thread main et t2 attendent le thread t1
 */
