@@ -257,7 +257,7 @@ Thread::Sleep ()
     scheduler->Run (nextThread);	// returns when we've been signalled
 }
 
-//Fonction de réveille du thread utiliser dans wait
+//Fonction de réveille du thread utilisé dans wait
 void ThreadWait(int arg) {
     Thread * t = (Thread *) arg;
     IntStatus oldLevel = interrupt->SetLevel (IntOff);

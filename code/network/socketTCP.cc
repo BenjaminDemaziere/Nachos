@@ -20,7 +20,7 @@ int getFreePort() {
     return -1;
 }
 
-
+//Struct utilisé pour la réémission de paquet
 typedef struct DataPacket{
     const char * data;
     int size;
@@ -95,7 +95,6 @@ SocketClientTCP::~SocketClientTCP() {
     delete semSend;
     delete semAck;
     delete semFinAck;
-    delete threadGetPacket;
     delete messages; 
 }
 
@@ -144,7 +143,6 @@ int SocketClientTCP::Connect(NetworkAddress addrServer, int port) {
     //Envoie l'acceptation de la connection
     // dans le getPacket car on peut recevoir plusieurs fois SYNACK
     currentThread->Wait(100*TEMPO);
-    printf("%d %d %d %d\n",packetHeader.from,packetHeader.to,mailHeader.from,mailHeader.to);
     DEBUG('r',"Connect success\n");
     return 1;
 }
@@ -247,37 +245,42 @@ int SocketClientTCP::Read(char *data, int size) {
 void SocketClientTCP::Close() {
     lock->Acquire();
     DEBUG('r',"Socket: close\n");
-    mailHeader.length = 0;
-    mailHeader.type = FIN;
-    mailHeader.numPacket = numPacket;
+    if(connectionClosed==false) {
+        mailHeader.length = 0;
+        mailHeader.type = FIN;
+        mailHeader.numPacket = numPacket;
 
-    packetHeader.length = sizeof(mailHeader);
-    postOffice->Send(packetHeader, mailHeader, NULL);
+        packetHeader.length = sizeof(mailHeader);
+        postOffice->Send(packetHeader, mailHeader, NULL);
 
-    DataPacket * d = new DataPacket;
-    d->size = 0;
-    d->data = NULL;
-    d->type = FIN;
-    d->numPacket = numPacket;
+        DataPacket * d = new DataPacket;
+        d->size = 0;
+        d->data = NULL;
+        d->type = FIN;
+        d->numPacket = numPacket;
 
-    void **arg = new void*[2];
-    arg[0] = (void*)d;
-    arg[1] = (void*)this;
-    //Lance le timer de renvoie du packet
-    lock->Release();
-    interrupt->Schedule(ReSendPacket, int(arg), TEMPO ,TimerInt);
-    semFinAck->P(); //Attend l'accusé de réception (FINACK)
-    lock->Acquire();
+        void **arg = new void*[2];
+        arg[0] = (void*)d;
+        arg[1] = (void*)this;
+        //Lance le timer de renvoie du packet
+        lock->Release();
+        interrupt->Schedule(ReSendPacket, int(arg), TEMPO ,TimerInt);
+        semFinAck->P(); //Attend l'accusé de réception (FINACK)
+        lock->Acquire();
 
-    lock->Release();
-    DEBUG('r',"Socket: close finish\n");
+        lock->Release();
+        DEBUG('r',"Socket: close finish\n");
+    }
+    else {
+        DEBUG('r',"Socket: close finish, the connection was already closed by the other socket\n");
+    }
 
     delete this;
 }
 
 
 
-//Méthode interne qui récupère les paquets depuis le postOffice et les met les messages de données dans la liste
+//Méthode interne qui récupère les paquets depuis le postOffice et met les messages de données dans la liste
 //Elle s'occupe aussi d'alerter write qu'un acquittement a eu lieu
 void SocketClientTCP::GetPacket() {
     PacketHeader pktHdr;
@@ -314,10 +317,10 @@ void SocketClientTCP::GetPacket() {
         else if(mailHdr.type==FINACK) {
             lock->Acquire();
             //Reçoit aquittement de fin de connection
-
             semFinAck->V();
-
             lock->Release();
+            //La connexion est finie, on libère le thread
+            currentThread->Finish();
         }
         //Reçoit une fin de connection de la part de l'autre socket
         else if(mailHdr.type==FIN) {
@@ -335,7 +338,7 @@ void SocketClientTCP::GetPacket() {
 
             //La connection est fermée 
             connectionClosed = true;
-            messages->StopRemove();
+            messages->StopRemove(); //Débloque l'appel sur le Read
 
             lock->Release();
         }
@@ -410,6 +413,12 @@ SocketServerTCP::~SocketServerTCP() {
     portUsed->Clear(mailHeader.from);//Port plus utilisé
     delete semAck;
     delete semSyn;
+}
+
+void SocketServerTCP::Close() {
+    DEBUG('r',"Call close server\n");
+
+    delete this;
 }
 
 SocketClientTCP * SocketServerTCP::Accept() {

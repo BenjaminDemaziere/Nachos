@@ -211,7 +211,8 @@ int ForkExec(char *s);
 étape 6, réseau
 */
 typedef struct socket_t {
-    int socket; //La socket sémaphore
+    int socket; //La socket 
+    char type; // 1=Client, 2=Server
 }socket_t;
 
 //Créer une socket

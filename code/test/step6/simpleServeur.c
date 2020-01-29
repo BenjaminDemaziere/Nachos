@@ -25,4 +25,7 @@ int main() {
         PutString(data);
     }
 
+    SocketClose(&client);
+    SocketClose(&serveur);
+
 }

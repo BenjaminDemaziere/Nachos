@@ -17,6 +17,7 @@
 
 
 //Renvoie un port(mailbox) non utilisé
+//-1 si aucun disponible
 int getFreePort();
 
 
@@ -35,6 +36,7 @@ class SocketClientTCP  {
         //renvoie 0 si l'envoie a echoué
         int Write(const char *data, int size);
 
+        //Méthode interne
         void Write1Packet(const char *data, int size);
 
         //Met les données reçue dans data avec une taille max de size
@@ -44,7 +46,7 @@ class SocketClientTCP  {
         //Ferme la connexion
         void Close();
 
-        //Fonction interne à ne pas appeler
+        //Fonction interne qui récupère les paquets depuis le post office
         void GetPacket();
 
 
@@ -67,7 +69,7 @@ class SocketClientTCP  {
         int synAckReceived; //Si on a reçu un synAck
         int portServer;
 
-        bool connectionClosed; //Si la connection a été fermé par la socket distante
+        bool connectionClosed; //Si la connexion a été fermée par la socket distante
         bool errorSend; //Si on a atteint max réémission
 };
 
@@ -76,10 +78,14 @@ class SocketServerTCP  {
         SocketServerTCP(int portS);
         ~SocketServerTCP();
 
-        //Attend qu'une demande de connection soit faite sur le port
+        //Attend qu'une demande de connexion soit faite sur le port
         //Retourne une socket client
         SocketClientTCP * Accept();
 
+        //Ferme la connexion!
+        void Close();
+
+        //Méthode interne
         void GetPacket();
 
         int port;

@@ -273,6 +273,7 @@ ExceptionHandler (ExceptionType which)
                 SocketClientTCP * sock = new SocketClientTCP(); //Création de la socket système
 
                 machine->WriteMem(userSock,4,(int)sock); //Ecrit dans le coté utilisateur l'adresse de la socket système
+                machine->WriteMem(userSock+sizeof(int),1,1); //Type de la socket
 
                 break;
             }
@@ -293,6 +294,8 @@ ExceptionHandler (ExceptionType which)
                     DEBUG('a', "SocketServerCreate, port already used\n");
                 }
                 machine->WriteMem(userSock,4,(int)sock); //Ecrit dans le coté utilisateur l'adresse de la socket système
+                machine->WriteMem(userSock+sizeof(int),1,2); //type de la socket
+
                 break;
             }
 
@@ -301,11 +304,19 @@ ExceptionHandler (ExceptionType which)
                 DEBUG('a', "SocketClose, initiated by user program.\n");
                 int userSock = machine->ReadRegister(4); //Adresse utilisateur
 
-                int adrSock;
-                machine->ReadMem(userSock,4,&adrSock); //Lit l'adresse du sémaphore système
-                SocketClientTCP * sock = (SocketClientTCP *) adrSock;
+                int adrSock; int typeSocket;
+                machine->ReadMem(userSock,4,&adrSock); //Lit l'adresse de la socket système
+                machine->ReadMem(userSock+sizeof(int),1,&typeSocket); //Lit le type de la socket
+                if(typeSocket==1) {
+                    SocketClientTCP * sock = (SocketClientTCP *) adrSock;
+                    sock->Close();
+                }
+                else if(typeSocket==2) {
+                    SocketServerTCP * sock = (SocketServerTCP *) adrSock;
+                    sock->Close();
+                }
 
-                sock->Close();
+  
                 break;
             }
 
@@ -322,7 +333,7 @@ ExceptionHandler (ExceptionType which)
                 char * data = new char[size]; //Les données à envoyer
                 machine->copyDataFromMachine(dataUser,data,size); //récupère les données depuis le programme utilisateur
 
-                printf("Taille:%d data:%s\n",size,data);
+                printf("Taille:%d data:\"%s\"\n",size,data);
 
                 int ret = sock->Write(data,size);
                 machine->WriteRegister(2,ret); //Le nombre d'octets écrits
@@ -374,6 +385,8 @@ ExceptionHandler (ExceptionType which)
                 }
                 else {
                     machine->WriteMem(userSockResponse,4,(int)sockClient); //Ecrit dans le coté utilisateur l'adresse de la socket système
+                    machine->WriteMem(userSockResponse+sizeof(int),1,1); //Indique que c'est une socket utilisateur
+
                     machine->WriteRegister(2,1); //Accept ok
                 }
 
