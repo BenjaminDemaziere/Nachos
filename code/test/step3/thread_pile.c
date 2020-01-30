@@ -3,7 +3,8 @@
 /*
 Partie 3
 test de création de plusieurs threads et modification de la pile
-
+Le premier thread modifie la pile
+Le second lit la pile, elle doit afficher des 0 car la pile est vide!
 */
 
 
@@ -27,9 +28,8 @@ void calcul(void * str) {
 }
 
 void calcul2(void * str) {
-
+    UserThreadJoin(t1);
     PutString("Début t2\n");
-
     int tab[tailleTab];
     for(int i=0;i<tailleTab;i++) {
         PutInt(tab[i]);
@@ -47,7 +47,6 @@ int main ()
     if(t1==-1) {
         PutString("Erreur\n");
     }
-    UserThreadJoin(t1);
     t2=UserThreadCreate(calcul2,0);
     if(t2==-1) {
         PutString("Erreur\n");
