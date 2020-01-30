@@ -10,8 +10,7 @@ void f(void *s){
   for (i = 0; i < N; i++)
     PutString((char*)s); 
 }
-main(){
-  int i;
+int main(){
   UserThreadCreate(f, (void *) THIS);
   UserThreadCreate(f, (void *) THAT);
   UserThreadCreate(f, (void *) THOS);

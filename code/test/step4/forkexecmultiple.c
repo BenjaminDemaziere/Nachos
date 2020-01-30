@@ -1,7 +1,7 @@
 #include "syscall.h"
 //Création de nombreux processus avec plusieurs threads chacuns
 
-main(){
+int main(){
   PutString("Les affichages sont de la forme \"xxy\" avec x le numéro du processus réalisant l'affichage et y le numéro du thread à l'intérieur de ce processus\n");
   PutString("\nCréation du processus n° 1. \n");
   ForkExec("./userpages0");

@@ -319,6 +319,7 @@ FileSystem::AddToFdTable(OpenFile * openFile)
       return TRUE;
     }
   }
+  return FALSE;
 }
 
 //----------------------------------------------------------------------
@@ -453,7 +454,6 @@ FileSystem::Move(const char *name)
     Directory *directory;
     OpenFile *fileNextDir;
     int sector;
-    int index;
     directory = new Directory(NumDirEntries);
     directory->FetchFrom(currentDirFile);
     sector = directory->Find(name);

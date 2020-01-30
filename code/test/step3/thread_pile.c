@@ -22,7 +22,7 @@ void calcul(void * str) {
     for(i=0;i<tailleTab;i++) {
         PutInt(i);
         PutChar('\n');
-        tab[i]=i;
+        tab[i]+=i;
     }
     PutString("Fin t1\n");
     UserThreadExit();

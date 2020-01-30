@@ -265,18 +265,7 @@ ExceptionHandler (ExceptionType which)
               break;
             }
 
-
-            case SC_SocketCreate: {
-                DEBUG('a', "SocketCreate, initiated by user program.\n");
-                int userSock = machine->ReadRegister(4); //Adresse utilisateur
-
-                SocketClientTCP * sock = new SocketClientTCP(); //Création de la socket système
-
-                machine->WriteMem(userSock,4,(int)sock); //Ecrit dans le coté utilisateur l'adresse de la socket système
-                machine->WriteMem(userSock+sizeof(int),1,1); //Type de la socket
-
-                break;
-            }
+            #ifdef FILESYS
             case SC_UserMkdir: {
                 DEBUG('a', "UserMkdir, initiated by user program.\n");
                 int adr = machine->ReadRegister(4); //On récupère l'adresse de la chaine
@@ -330,7 +319,17 @@ ExceptionHandler (ExceptionType which)
                 int adr = machine->ReadRegister(4); //On récupère le premier argument
                 int size = machine->ReadRegister(5); //On récupère le deuxième argument
 
-
+                char * buf = new char[MAX_STRING_SIZE];
+                machine->copyStringFromMachine(adr,buf,MAX_STRING_SIZE); //Récupère la chaine dans buf
+                bool ret = fileSystem->CreateFile(buf,size);
+                //Ecriture de la valeur de retour
+                if(ret){
+                  machine->WriteRegister(2, 0);
+                }else{
+                  machine->WriteRegister(2, 1);
+                }
+                delete buf; //On supprime le buffer
+                break;
             
             }
             case SC_UserRmFile: {
@@ -369,6 +368,19 @@ ExceptionHandler (ExceptionType which)
                 int arg = machine->ReadRegister(4); //On récupère le fd à fermer
                 fileSystem->Close(arg);
                 //currentThread->Close(arg);
+                break;
+            }
+            #endif //filesys
+
+            case SC_SocketCreate: {
+                DEBUG('a', "SocketCreate, initiated by user program.\n");
+                int userSock = machine->ReadRegister(4); //Adresse utilisateur
+
+                SocketClientTCP * sock = new SocketClientTCP(); //Création de la socket système
+
+                machine->WriteMem(userSock,4,(int)sock); //Ecrit dans le coté utilisateur l'adresse de la socket système
+                machine->WriteMem(userSock+sizeof(int),1,1); //Type de la socket
+
                 break;
             }
 
@@ -501,21 +513,6 @@ ExceptionHandler (ExceptionType which)
                 machine->WriteRegister(2,ret);
                 break;
             }
-
-
-
-                char * buf = new char[MAX_STRING_SIZE];
-                machine->copyStringFromMachine(adr,buf,MAX_STRING_SIZE); //Récupère la chaine dans buf
-                bool ret = fileSystem->CreateFile(buf,size);
-                //Ecriture de la valeur de retour
-                if(ret){
-                  machine->WriteRegister(2, 0);
-                }else{
-                  machine->WriteRegister(2, 1);
-                }
-                delete buf; //On supprime le buffer
-                break;
-
 
             default: {
                 printf("Unexpected user mode exception %d %d\n", which, type);

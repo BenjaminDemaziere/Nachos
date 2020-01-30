@@ -12,8 +12,7 @@ void f(void *s){
      PutString((char*)s);
 
 }
-main(){
-  int i;
+int main(){
   UserThreadCreate(f, (void *) THIS);
   UserThreadCreate(f, (void *) THAT);
   UserThreadCreate(f, (void *) THOS);
