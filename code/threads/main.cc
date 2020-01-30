@@ -144,6 +144,7 @@ main (int argc, char **argv)
 		Print (*(argv + 1));
 		argCount = 2;
 	    }
+
 	  else if (!strcmp (*argv, "-r"))
 	    {			// remove Nachos file
 		ASSERT (argc > 1);
@@ -161,6 +162,30 @@ main (int argc, char **argv)
 	  else if (!strcmp (*argv, "-t"))
 	    {			// performance test
 		PerformanceTest ();
+	    }
+    else if (!strcmp (*argv, "-p"))
+	    {			// print a Nachos file
+		ASSERT (argc > 1);
+		Print (*(argv + 1));
+		argCount = 2;
+	    }
+    else if (!strcmp (*argv, "-mkf"))
+	    {			// print a Nachos file
+		ASSERT (argc > 1);
+    fileSystem->CreateFile(*(argv + 1), 20);
+		argCount = 2;
+	    }
+    else if (!strcmp (*argv, "-mkdir"))
+	    {			// print a Nachos file
+		ASSERT (argc > 1);
+    fileSystem->CreateDir(*(argv + 1));
+		argCount = 2;
+	    }
+    else if (!strcmp (*argv, "-cd"))
+	    {			// print a Nachos file
+		ASSERT (argc > 1);
+		fileSystem->Move(*(argv + 1));
+		argCount = 2;
 	    }
 #endif // FILESYS
 #ifdef NETWORK

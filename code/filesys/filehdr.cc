@@ -1,17 +1,17 @@
-// filehdr.cc 
+// filehdr.cc
 //	Routines for managing the disk file header (in UNIX, this
 //	would be called the i-node).
 //
-//	The file header is used to locate where on disk the 
+//	The file header is used to locate where on disk the
 //	file's data is stored.  We implement this as a fixed size
-//	table of pointers -- each entry in the table points to the 
+//	table of pointers -- each entry in the table points to the
 //	disk sector containing that portion of the file data
-//	(in other words, there are no indirect or doubly indirect 
+//	(in other words, there are no indirect or doubly indirect
 //	blocks). The table size is chosen so that the file header
-//	will be just big enough to fit in one disk sector, 
+//	will be just big enough to fit in one disk sector,
 //
-//      Unlike in a real system, we do not keep track of file permissions, 
-//	ownership, last modification date, etc., in the file header. 
+//      Unlike in a real system, we do not keep track of file permissions,
+//	ownership, last modification date, etc., in the file header.
 //
 //	A file header can be initialized in two ways:
 //	   for a new file, by modifying the in-memory data structure
@@ -19,7 +19,7 @@
 //	   for a file already on disk, by reading the file header from disk
 //
 // Copyright (c) 1992-1993 The Regents of the University of California.
-// All rights reserved.  See copyright.h for copyright notice and limitation 
+// All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 
 #include "copyright.h"
@@ -39,15 +39,16 @@
 //----------------------------------------------------------------------
 
 bool
-FileHeader::Allocate(BitMap *freeMap, int fileSize)
-{ 
+FileHeader::Allocate(BitMap *freeMap, int fileSize, bool beDir)
+{   isDir = beDir;
     numBytes = fileSize;
     numSectors  = divRoundUp(fileSize, SectorSize);
     if (freeMap->NumClear() < numSectors)
-	return FALSE;		// not enough space
+	   return FALSE;		// not enough space
 
     for (int i = 0; i < numSectors; i++)
-	dataSectors[i] = freeMap->Find();
+	    dataSectors[i] = freeMap->Find();
+
     return TRUE;
 }
 
@@ -58,7 +59,7 @@ FileHeader::Allocate(BitMap *freeMap, int fileSize)
 //	"freeMap" is the bit map of free disk sectors
 //----------------------------------------------------------------------
 
-void 
+void
 FileHeader::Deallocate(BitMap *freeMap)
 {
     for (int i = 0; i < numSectors; i++) {
@@ -69,7 +70,7 @@ FileHeader::Deallocate(BitMap *freeMap)
 
 //----------------------------------------------------------------------
 // FileHeader::FetchFrom
-// 	Fetch contents of file header from disk. 
+// 	Fetch contents of file header from disk.
 //
 //	"sector" is the disk sector containing the file header
 //----------------------------------------------------------------------
@@ -82,7 +83,7 @@ FileHeader::FetchFrom(int sector)
 
 //----------------------------------------------------------------------
 // FileHeader::WriteBack
-// 	Write the modified contents of the file header back to disk. 
+// 	Write the modified contents of the file header back to disk.
 //
 //	"sector" is the disk sector to contain the file header
 //----------------------------------------------------------------------
@@ -90,7 +91,7 @@ FileHeader::FetchFrom(int sector)
 void
 FileHeader::WriteBack(int sector)
 {
-    synchDisk->WriteSector(sector, (char *)this); 
+    synchDisk->WriteSector(sector, (char *)this);
 }
 
 //----------------------------------------------------------------------
@@ -144,7 +145,19 @@ FileHeader::Print()
             else
 		printf("\\%x", (unsigned char)data[j]);
 	}
-        printf("\n"); 
+        printf("\n");
     }
     delete [] data;
+}
+
+void FileHeader::GenerateFd(){
+  if(this->fd == 0){
+    this->fd=fdNextFile;
+    fdNextFile++;
+  }
+}
+
+
+int FileHeader::GetFd(){
+  return this->fd;
 }

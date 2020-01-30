@@ -2,7 +2,7 @@
 
 /*
 Partie 3
-test de deux thread qui attendent un même thread 
+test de deux thread qui attendent un meme thread 
 
 Le thread main et t2 attendent le thread t1
 */
@@ -48,5 +48,6 @@ int main ()
     UserThreadJoin(t1);
     PutString("Main fin attente t1\n");
 
+    return 0;
 }
 

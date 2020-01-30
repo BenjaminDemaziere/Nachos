@@ -18,7 +18,8 @@ int t1,t2;
 void calcul(void * str) {
     PutString("Début t1\n");
     int tab[tailleTab];
-    for(int i=0;i<tailleTab;i++) {
+    int i;
+    for(i=0;i<tailleTab;i++) {
         PutInt(i);
         PutChar('\n');
         tab[i]=i;
@@ -31,7 +32,8 @@ void calcul2(void * str) {
     UserThreadJoin(t1);
     PutString("Début t2\n");
     int tab[tailleTab];
-    for(int i=0;i<tailleTab;i++) {
+    int i;
+    for(i=0;i<tailleTab;i++) {
         PutInt(tab[i]);
         PutChar('\n');
     }

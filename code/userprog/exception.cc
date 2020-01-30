@@ -30,8 +30,7 @@
 #include "utility.h"
 #include "synch.h"
 #include "../network/socketTCP.h"
-
-
+#include "filehdr.h"
 
 extern int nbprocess;
 extern void StartProcess (char *file);
@@ -96,7 +95,7 @@ ExceptionHandler (ExceptionType which)
                     }
                 }
 
-            
+
               mutex->P();
               nbAtt++;
               if(nbAtt == nbprocess){
@@ -261,6 +260,7 @@ ExceptionHandler (ExceptionType which)
               Thread *newThread = new Thread("Thread système");//Création de thread système
               newThread->Fork((VoidFunctionPtr)StartProcess,(int)buf);//Lancement du nouveau programme dans ce thread
               machine->WriteRegister(2, 0); // On écrit la valeur de retour
+              delete buf;
               currentThread->Yield();
               break;
             }
@@ -277,7 +277,100 @@ ExceptionHandler (ExceptionType which)
 
                 break;
             }
+            case SC_UserMkdir: {
+                DEBUG('a', "UserMkdir, initiated by user program.\n");
+                int adr = machine->ReadRegister(4); //On récupère l'adresse de la chaine
+                char * buf = new char[MAX_STRING_SIZE];
+                machine->copyStringFromMachine(adr,buf,MAX_STRING_SIZE); //Récupère la chaine dans buf
+                bool ret = fileSystem->CreateDir(buf);
+                //Ecriture de la valeur de retour
+                if(ret){
+                  machine->WriteRegister(2, 0);
+                }else{
+                  machine->WriteRegister(2, 1);
+                }
+                delete buf; //On supprime le buffer
+                break;
+            }
+            case SC_UserChdir: {
+                DEBUG('a', "UserChdir, initiated by user program.\n");
+                int adr = machine->ReadRegister(4); //On récupère l'adresse de la chaine
+                char * buf = new char[MAX_STRING_SIZE];
+                machine->copyStringFromMachine(adr,buf,MAX_STRING_SIZE); //Récupère la chaine dans buf
+                bool ret = fileSystem->Move(buf);
+                if(ret){
+                  machine->WriteRegister(2, 0);
+                }else{
+                  machine->WriteRegister(2, 1);
+                }
+                delete buf; //On supprime le buffer
+                break;
+            }
+            case SC_UserRmdir: {
+                DEBUG('a', "UserRmdir, initiated by user program.\n");
+                int adr = machine->ReadRegister(4); //On récupère l'adresse de la chaine
+                char * buf = new char[MAX_STRING_SIZE];
+                machine->copyStringFromMachine(adr,buf,MAX_STRING_SIZE); //Récupère la chaine dans buf
+                bool ret = fileSystem->Remove(buf);
+                if(ret){
+                  machine->WriteRegister(2, 0);
+                }else{
+                  machine->WriteRegister(2, 1);
+                }
+                delete buf; //On supprime le buffer
+                break;
+            }
+            case SC_UserListdir: {
+                DEBUG('a', "UserListdir, initiated by user program.\n");
+                fileSystem->List ();
+                break;
+            }
+            case SC_UserMkFile: {
+                DEBUG('a', "UserMkFile, initiated by user program.\n");
+                int adr = machine->ReadRegister(4); //On récupère le premier argument
+                int size = machine->ReadRegister(5); //On récupère le deuxième argument
 
+
+            
+            }
+            case SC_UserRmFile: {
+                DEBUG('a', "UserRmFile, initiated by user program.\n");
+                int adr = machine->ReadRegister(4); //On récupère l'adresse de la chaine
+                char * buf = new char[MAX_STRING_SIZE];
+                machine->copyStringFromMachine(adr,buf,MAX_STRING_SIZE); //Récupère la chaine dans buf
+                bool ret = fileSystem->Remove(buf);
+                if(ret){
+                  machine->WriteRegister(2, 0);
+                }else{
+                  machine->WriteRegister(2, 1);
+                }
+                delete buf; //On supprime le buffer
+                break;
+            }
+            case SC_UserOpenFile: {
+                DEBUG('a', "UserOpenFile, initiated by user program.\n");
+                int adr = machine->ReadRegister(4); //On récupère l'adresse de la chaine
+                char * buf = new char[MAX_STRING_SIZE];
+                machine->copyStringFromMachine(adr,buf,MAX_STRING_SIZE); //Récupère la chaine dans buf
+                OpenFile * ret = fileSystem->Open(buf); //On ouvre le fichier
+                ret->GetHeader()->GenerateFd(); //On génère son descripteur
+                bool b = fileSystem->AddToFdTable(ret); //On l'ajoute à la table des fichiers
+                if(b){
+                  //currentThread->Open(ret);
+                  machine->WriteRegister(2, ret->GetHeader()->GetFd());
+                }else{
+                  machine->WriteRegister(2, -1);
+                }
+                delete buf; //On supprime le buffer
+                break;
+            }
+            case SC_UserCloseFile: {
+                DEBUG('a', "UserCloseFile, initiated by user program.\n");
+                int arg = machine->ReadRegister(4); //On récupère le fd à fermer
+                fileSystem->Close(arg);
+                //currentThread->Close(arg);
+                break;
+            }
 
             case SC_SocketServerCreate: {
                 DEBUG('a', "SocketServerCreate, initiated by user program.\n");
@@ -409,6 +502,19 @@ ExceptionHandler (ExceptionType which)
                 break;
             }
 
+
+
+                char * buf = new char[MAX_STRING_SIZE];
+                machine->copyStringFromMachine(adr,buf,MAX_STRING_SIZE); //Récupère la chaine dans buf
+                bool ret = fileSystem->CreateFile(buf,size);
+                //Ecriture de la valeur de retour
+                if(ret){
+                  machine->WriteRegister(2, 0);
+                }else{
+                  machine->WriteRegister(2, 1);
+                }
+                delete buf; //On supprime le buffer
+                break;
 
 
             default: {

@@ -28,6 +28,7 @@ int main ()
     PutString("Main attend t1\n");
     UserThreadJoin(t1);
     PutString("Main fin attente t1\n");
-
+    
+    return 0;
 }
 

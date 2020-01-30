@@ -14,7 +14,7 @@ int main() {
     PutInt(12);
     PutChar('\n');
 
-    //Nombre trop grand
+    // Nombre trop grand
     PutInt(5000000000);
     PutChar('\n');
 

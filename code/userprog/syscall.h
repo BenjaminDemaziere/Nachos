@@ -44,6 +44,18 @@
 #define SC_SemaphoreV 22
 #define SC_SemaphoreFree 23
 
+#define SC_UserMkdir 30
+#define SC_UserChdir 31
+#define SC_UserRmdir 32
+#define SC_UserListdir 33
+#define SC_UserMkFile 34
+#define SC_UserRmFile 35
+#define SC_UserOpenFile 36
+#define SC_UserCloseFile 37
+
+
+
+
 #define SC_ForkExec 40
 
 
@@ -201,10 +213,52 @@ void SemaphoreFree(sem_t * sem);
 
 
 /*
-étape 4, création d'un nouveau processus
+étape 4, création d'un nouveau processus, exécutant le programme s
+renvoie 0 si tout se passe bien
 */
 int ForkExec(char *s);
 
+
+/*
+étape 5, gestion des fichiers et répertoires
+*/
+//Crée un nouveau répertoire de nom dirName s'il n'existe pas
+//déja dans le répertoire courant
+//Renvoie 0 en cas de succès , 1 sinon
+int UserMkdir(char *dirName);
+
+//Déplace la répertoire courant vers le répertoire de nom dirName,
+//si il existe dans le répertoire courant
+//Renvoie 0 en cas de succès , 1 sinon
+int UserChdir(char *dirName);
+
+//Supprime le répertoire de nom dirName
+//si il existe dans le répertoire courant
+//Renvoie 0 en cas de succès , 1 sinon
+int UserRmdir(char *dirName);
+
+//Affiche le contenu du répertoire courant
+void UserListdir();
+
+//Crée un fichier de nom fileName
+//fileName ne dois pas être utilisé dans le répertoire courant
+//Renvoie 0 en cas de succès , 1 sinon
+int UserMkFile(char *fileName, int size);
+
+//Détruit un fichier de nom fileName
+//fileName dois être dans le répertoire courant
+//Renvoie 0 en cas de succès , 1 sinon
+int UserRmFile(char *fileName);
+
+//Ouvre un fichier de nom fileName
+//fileName dois être dans le répertoire courant
+//Il dois rester de la place dans la table de fichiers du système
+//Renvoie le file descriptor du fichier ouvert en cas de succès
+//-1 sinon
+int UserOpenFile(char *fileName);
+
+//Ferme un fichier de nom fileName
+void UserCloseFile(int fd);
 
 
 /*
@@ -235,10 +289,6 @@ void SocketClose(socket_t * socket);
 //Envoie et réception de données sur la socket
 int SocketSend(socket_t * socket,char * data,int size); 
 int SocketReceive(socket_t * socket,char * data, int size); 
-
-
-
-
 
 
 

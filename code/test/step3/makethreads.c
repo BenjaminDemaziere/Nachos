@@ -22,7 +22,7 @@ void affichage(void * str) {
 
 int main ()
 {
-    PutString("Début test thread\n");
+    PutString("Debut test thread\n");
     UserThreadCreate(affichage,"Affichage1\n");
     UserThreadCreate(affichage,"Affichage2\n");
     UserThreadCreate(affichage,"Affichage3\n");

@@ -26,6 +26,8 @@ FileSystem *fileSystem;
 
 #ifdef FILESYS
 SynchDisk *synchDisk;
+int fdNextFile;
+
 #endif
 
 #ifdef USER_PROGRAM		// requires either FILESYS or FILESYS_STUB
@@ -167,6 +169,8 @@ Initialize (int argc, char **argv)
 
 #ifdef FILESYS
     synchDisk = new SynchDisk ("DISK");
+    fdNextFile = 1;
+
 #endif
 
 #ifdef FILESYS_NEEDED
