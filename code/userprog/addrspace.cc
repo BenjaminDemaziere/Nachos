@@ -362,6 +362,7 @@ void AddrSpace::JoinThread(int idT) {
         delete sem; //Supprime le sémaphore
     }
     else {
+        semAddrspace->V();
         DEBUG('t', "ThreadJoin: le thread %d n'existe pas\n", idT);
     }
 }

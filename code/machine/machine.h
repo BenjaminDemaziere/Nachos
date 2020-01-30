@@ -32,7 +32,7 @@
 					// the disk sector size, for
 					// simplicity
 
-#define NumPhysPages    64
+#define NumPhysPages    256
 #define MemorySize 	(NumPhysPages * PageSize)
 #define TLBSize		4		// if there is a TLB, make it small
 
@@ -192,6 +192,16 @@ class Machine {
 		Copy a string from Linux (str) to Machine (to)
 	*/
 	void copyStringToMachine(char * str, int to, int size);
+
+	/*	(étape 6)
+		Copy data from MIPS to LINUX
+	*/
+	void copyDataFromMachine( int from, char *to, unsigned size);
+
+	/*	(étape 6)
+		Copy data from LINUX to MIPS
+	*/
+	void copyDataToMachine(char * str, int to, int size);
 
   private:
     bool singleStep;		// drop back into the debugger after each

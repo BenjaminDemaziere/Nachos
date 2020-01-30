@@ -16,11 +16,19 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+/*
+./nachos-mynetwork  -m 0 -o 1 -l 0.7 -d r
+./nachos-mynetwork  -m 1 -o 0 -l 0.7 -d r
+*/
+#include <exception>
+
+
 #include "copyright.h"
 
 #include "system.h"
 #include "network.h"
 #include "post.h"
+#include "socketTCP.h"
 #include "interrupt.h"
 
 // Test out message delivery, by doing the following:
@@ -30,27 +38,28 @@
 //	4. wait for an acknowledgement from the other machine to our 
 //	    original message
 
-void
-MailTest(int farAddr)
-{
     PacketHeader outPktHdr, inPktHdr;
     MailHeader outMailHdr, inMailHdr;
     const char *data = "Hello there!";
     const char *ack = "Got it!";
     char buffer[MaxMailSize];
 
+
+void sendReceive(int farAddr) {
     // construct packet, mail header for original message
     // To: destination machine, mailbox 0
     // From: our machine, reply to: mailbox 1
     outPktHdr.to = farAddr;		
     outMailHdr.to = 0;
-    outMailHdr.from = 1;
+    outMailHdr.from = 0;
     outMailHdr.length = strlen(data) + 1;
 
     // Send the first message
+    printf("Send message\n");
     postOffice->Send(outPktHdr, outMailHdr, data); 
 
     // Wait for the first message from the other machine
+    printf("Rec message");
     postOffice->Receive(0, &inPktHdr, &inMailHdr, buffer);
     printf("Got \"%s\" from %d, box %d\n",buffer,inPktHdr.from,inMailHdr.from);
     fflush(stdout);
@@ -63,9 +72,74 @@ MailTest(int farAddr)
     postOffice->Send(outPktHdr, outMailHdr, ack); 
 
     // Wait for the ack from the other machine to the first message we sent.
-    postOffice->Receive(1, &inPktHdr, &inMailHdr, buffer);
+    postOffice->Receive(0, &inPktHdr, &inMailHdr, buffer);
     printf("Got \"%s\" from %d, box %d\n",buffer,inPktHdr.from,inMailHdr.from);
     fflush(stdout);
+}
+
+
+//Test de base
+void
+MailTest(int farAddr)
+{
+
+    for(int i=0;i<10;i++)
+        sendReceive(farAddr);
+}
+
+
+void MailTest2(int farAddr)
+{
+    /*
+        Test des sockets
+    */
+
+    if(farAddr==0) {
+        printf("Client\n");
+
+        SocketClientTCP * s = new SocketClientTCP();
+        int ret = s->Connect(0,1);
+        if(ret==1) {
+            printf("Connect\n");
+
+
+            const char * buf = "Bonjour\n";
+            for(int i=0;i<10;i++) {
+                s->Write(buf,9);
+            }
+
+            s->Close();
+        }
+        else {
+            printf("Can't connect\n");
+        }
+
+    }
+    //Le serveur est à l'adresse 0
+    else if(farAddr==1) {
+        printf("Serveur\n");
+            SocketServerTCP * serveur = NULL;
+
+        try{
+            serveur = new SocketServerTCP(1);
+            SocketClientTCP * s = serveur->Accept();
+
+            printf("Accept\n");
+            char t[200];
+            int ret;
+            for(int i=0;i<1000 && ret!=0;i++) {
+                ret = s->Read(t,38);
+                printf("%s",t);
+            }
+        }
+        catch(const std::exception& e)
+        {
+            printf("Erreur port déjà utilisé: %d\n",(int)serveur);
+        }
+        
+    }
+
+
 
     // Then we're done!
     interrupt->Halt();

@@ -110,6 +110,8 @@ class Interrupt {
     void Schedule(VoidFunctionPtr handler,// Schedule an interrupt to occur
 	int arg, long long when, IntType type);// at time ``when''.  This is called
     					// by the hardware device simulators.
+
+    void RemoveScheduledInterrupt(VoidFunctionPtr handler, int arg, long long fromNow, IntType type);
     
     void OneTick();       		// Advance simulated time
 

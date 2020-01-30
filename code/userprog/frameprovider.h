@@ -10,6 +10,8 @@ class FrameProvider //Objet contenant la bitmap de la mémoire et gérant
 
     FrameProvider();//Constructeur du FrameProvider
 
+    ~FrameProvider();
+
     void ReleaseFrame(int index); //Permet de libérer le cadre d'index "index";
 
     int GetEmptyFrame(); //Retourne le numéro du premier cadre disponible (libre)

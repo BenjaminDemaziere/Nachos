@@ -202,6 +202,38 @@ UserThreadJoin:
 	j	$31
 	.end UserThreadJoin
 
+	.globl SemaphoreInit
+	.ent SemaphoreInit
+SemaphoreInit:
+	addiu $2,$0,SC_SemaphoreInit
+	syscall
+	j	$31
+	.end SemaphoreInit
+
+	.globl SemaphoreP
+	.ent SemaphoreP
+SemaphoreP:
+	addiu $2,$0,SC_SemaphoreP
+	syscall
+	j	$31
+	.end SemaphoreP
+
+	.globl SemaphoreV
+	.ent SemaphoreV
+SemaphoreV:
+	addiu $2,$0,SC_SemaphoreV
+	syscall
+	j	$31
+	.end SemaphoreV
+
+	.globl SemaphoreFree
+	.ent SemaphoreFree
+SemaphoreFree:
+	addiu $2,$0,SC_SemaphoreFree
+	syscall
+	j	$31
+	.end SemaphoreFree
+
   .globl ForkExec
   .ent ForkExec
 ForkExec:
@@ -210,6 +242,126 @@ ForkExec:
   j	$31
   .end ForkExec
 
+  .globl UserMkdir
+  .ent UserMkdir
+UserMkdir:
+  addiu $2,$0,SC_UserMkdir
+  syscall
+  j	$31
+  .end UserMkdir
+
+  .globl UserChdir
+  .ent UserChdir
+UserChdir:
+  addiu $2,$0,SC_UserChdir
+  syscall
+  j	$31
+  .end UserChdir
+
+  .globl UserRmdir
+  .ent UserRmdir
+UserRmdir:
+  addiu $2,$0,SC_UserRmdir
+  syscall
+  j	$31
+  .end UserRmdir
+
+  .globl UserListdir
+  .ent UserListdir
+UserListdir:
+  addiu $2,$0,SC_UserListdir
+  syscall
+  j	$31
+  .end UserListdir
+
+  .globl UserMkFile
+  .ent UserMkFile
+UserMkFile:
+  addiu $2,$0,SC_UserMkFile
+  syscall
+  j	$31
+  .end UserMkFile
+
+  .globl UserRmFile
+  .ent UserRmFile
+UserRmFile:
+  addiu $2,$0,SC_UserRmFile
+  syscall
+  j	$31
+  .end UserRmFile
+
+  .globl UserOpenFile
+  .ent UserOpenFile
+UserOpenFile:
+  addiu $2,$0,SC_UserOpenFile
+  syscall
+  j	$31
+  .end UserOpenFile
+
+  .globl UserCloseFile
+  .ent UserCloseFile
+UserCloseFile:
+  addiu $2,$0,SC_UserCloseFile
+  syscall
+  j	$31
+  .end UserCloseFile
+
+
+	.globl SocketCreate
+	.ent SocketCreate
+SocketCreate:
+	addiu $2,$0,SC_SocketCreate
+	syscall
+	j	$31
+	.end SocketCreate
+
+	.globl SocketServerCreate
+	.ent SocketServerCreate
+SocketServerCreate:
+	addiu $2,$0,SC_SocketServerCreate
+	syscall
+	j	$31
+	.end SocketServerCreate
+
+	.globl SocketClose
+	.ent SocketClose
+SocketClose:
+	addiu $2,$0,SC_SocketClose
+	syscall
+	j	$31
+	.end SocketClose
+
+	.globl SocketSend
+	.ent SocketSend
+SocketSend:
+	addiu $2,$0,SC_SocketSend
+	syscall
+	j	$31
+	.end SocketSend
+
+	.globl SocketReceive
+	.ent SocketReceive
+SocketReceive:
+	addiu $2,$0,SC_SocketReceive
+	syscall
+	j	$31
+	.end SocketReceive
+
+	.globl SocketAccept
+	.ent SocketAccept
+SocketAccept:
+	addiu $2,$0,SC_SocketAccept
+	syscall
+	j	$31
+	.end SocketAccept
+
+	.globl SocketConnect
+	.ent SocketConnect
+SocketConnect:
+	addiu $2,$0,SC_SocketConnect
+	syscall
+	j	$31
+	.end SocketConnect
 
 /* dummy function to keep gcc happy */
         .globl  __main

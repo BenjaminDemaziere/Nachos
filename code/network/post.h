@@ -39,18 +39,27 @@ typedef int MailBoxAddress;
 // This is prepended to the message by the PostOffice, before the message 
 // is sent to the Network.
 
+enum TypePacket {DATA,ACK,FIN,SYN,SYNACK,FINACK};
+
+
 class MailHeader {
   public:
     MailBoxAddress to;		// Destination mail box
     MailBoxAddress from;	// Mail box to reply to
     unsigned length;		// Bytes of message data (excluding the 
 				// mail header)
+    TypePacket type; //Le type du paquet
+
+    //Si type=DATA //Numéro de paquet
+    //SI type=ACK //Numéro d'acquittement
+    int numPacket;
 };
 
 // Maximum "payload" -- real data -- that can included in a single message
 // Excluding the MailHeader and the PacketHeader
 
 #define MaxMailSize 	(MaxPacketSize - sizeof(MailHeader))
+#define NumberBoxMail 10
 
 
 // The following class defines the format of an incoming/outgoing 
@@ -86,8 +95,15 @@ class MailBox {
    				// Atomically get a message out of the 
 				// mailbox (and wait if there is no message 
 				// to get!)
+
+    //Quitte Get
+    void StopGet(); 
+    //Retourne true si on a fait appel à stopGet
+    bool HasStopGet();
+
   private:
     SynchList *messages;	// A mailbox is just a list of arrived messages
+    bool stopGet;
 };
 
 // The following class defines a "Post Office", or a collection of 
@@ -111,6 +127,8 @@ class PostOffice {
     				// Send a message to a mailbox on a remote 
 				// machine.  The fromBox in the MailHeader is 
 				// the return box for ack's.
+
+
     
     void Receive(int box, PacketHeader *pktHdr, 
 		MailHeader *mailHdr, char *data);
@@ -128,9 +146,13 @@ class PostOffice {
 				// off of network (i.e., time to call 
 				// PostalDelivery)
 
+    void StopReceive(int box);
+    bool HasStopReceive(int box);
+
+    NetworkAddress netAddr;	// Network address of this machine
+
   private:
     Network *network;		// Physical network connection
-    NetworkAddress netAddr;	// Network address of this machine
     MailBox *boxes;		// Table of mail boxes to hold incoming mail
     int numBoxes;		// Number of mail boxes
     Semaphore *messageAvailable;// V'ed when message has arrived from network

@@ -52,6 +52,7 @@ Mail::Mail(PacketHeader pktH, MailHeader mailH, char *msgData)
 MailBox::MailBox()
 { 
     messages = new SynchList(); 
+    stopGet = false;
 }
 
 //----------------------------------------------------------------------
@@ -120,22 +121,41 @@ MailBox::Put(PacketHeader pktHdr, MailHeader mailHdr, char *data)
 
 void 
 MailBox::Get(PacketHeader *pktHdr, MailHeader *mailHdr, char *data) 
-{ 
+{
+    stopGet = false;
     DEBUG('n', "Waiting for mail in mailbox\n");
     Mail *mail = (Mail *) messages->Remove();	// remove message from list;
 						// will wait if list is empty
 
-    *pktHdr = mail->pktHdr;
-    *mailHdr = mail->mailHdr;
-    if (DebugIsEnabled('n')) {
-	printf("Got mail from mailbox: ");
-	PrintHeader(*pktHdr, *mailHdr);
+    if(mail==NULL) { //Si on a appelé StopGet
+        DEBUG('r', "StopGet in mailbox\n");
+        stopGet = true;
     }
-    bcopy(mail->data, data, mail->mailHdr.length);
-					// copy the message data into
-					// the caller's buffer
-    delete mail;			// we've copied out the stuff we
-					// need, we can now discard the message
+    else {
+        *pktHdr = mail->pktHdr;
+        *mailHdr = mail->mailHdr;
+        if (DebugIsEnabled('n')) {
+        printf("Got mail from mailbox: ");
+        PrintHeader(*pktHdr, *mailHdr);
+        }
+        bcopy(mail->data, data, mail->mailHdr.length);
+                        // copy the message data into
+                        // the caller's buffer
+        delete mail;			// we've copied out the stuff we
+                        // need, we can now discard the message
+    }
+}
+
+
+//----------------------------------------------------------------------
+// Quitte de force l'appel à get si un appel était en cours
+//----------------------------------------------------------------------
+void MailBox::StopGet() {
+    messages->StopRemove();
+}
+
+bool MailBox::HasStopGet() {
+    return stopGet;
 }
 
 //----------------------------------------------------------------------
@@ -313,6 +333,21 @@ PostOffice::Receive(int box, PacketHeader *pktHdr,
 
     boxes[box].Get(pktHdr, mailHdr, data);
     ASSERT(mailHdr->length <= MaxMailSize);
+}
+
+//----------------------------------------------------------------------
+// Arrète l'appel à Receive sur la box
+//----------------------------------------------------------------------
+void PostOffice::StopReceive(int box) {
+    DEBUG('r',"StopReceive %d\n",box);
+    boxes[box].StopGet();
+}
+
+//----------------------------------------------------------------------
+// Retourne vrai si on a quitté receive sur la box avec un appelle de StopReceive
+//----------------------------------------------------------------------
+bool PostOffice::HasStopReceive(int box){
+    return boxes[box].HasStopGet();
 }
 
 //----------------------------------------------------------------------

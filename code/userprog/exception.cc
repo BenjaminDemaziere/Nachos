@@ -21,13 +21,16 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 
+#include <exception>
+
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
 #include "userthread.h"
 #include "utility.h"
 #include "synch.h"
-
+#include "../network/socketTCP.h"
+#include "filehdr.h"
 
 extern int nbprocess;
 extern void StartProcess (char *file);
@@ -92,7 +95,7 @@ ExceptionHandler (ExceptionType which)
                     }
                 }
 
-            
+
               mutex->P();
               nbAtt++;
               if(nbAtt == nbprocess){
@@ -104,6 +107,7 @@ ExceptionHandler (ExceptionType which)
               }else{ //Désalloue le processus
                 mutex->V();
                 attente->P();
+                delete currentThread->space;
                 currentThread->Finish();
               }
                 //Dernier processus termine nachos
@@ -192,6 +196,62 @@ ExceptionHandler (ExceptionType which)
                 do_UserThreadExit();
                 break;
             }
+
+            case SC_UserThreadJoin: {
+                DEBUG('a', "UserThreadJoin, initiated by user program.\n");
+                int idT = machine->ReadRegister(4);
+                do_UserThreadJoin(idT);
+                break;
+            }
+
+            case SC_SemaphoreInit: {
+                DEBUG('a', "SempahoreInit, initiated by user program.\n");
+                int sem = machine->ReadRegister(4); //Le sem utilisateur
+                int nbValue = machine->ReadRegister(5); //Le nombre pour initialiser le sémaphore
+
+                Semaphore * semSystem = new Semaphore("Sem utilisateur",nbValue); //Création du sémaphore système
+
+                machine->WriteMem(sem,4,(int)semSystem); //Ecrit dans le coté utilisateur l'adresse du sémahpore système
+
+                break;
+            }
+
+            case SC_SemaphoreP: {
+                DEBUG('a', "SempahoreP, initiated by user program.\n");
+                int userSem = machine->ReadRegister(4); //Le sémaphore utilisateur
+
+                int adrSem;
+                machine->ReadMem(userSem,4,&adrSem); //Lit l'adresse du sémaphore système
+                Semaphore * sem = (Semaphore * ) adrSem;
+
+                sem->P();
+                break;
+            }
+
+            case SC_SemaphoreV: {
+                DEBUG('a', "SempahoreV, initiated by user program.\n");
+                int userSem = machine->ReadRegister(4); //Adresse utilisateur
+
+                int adrSem;
+                machine->ReadMem(userSem,4,&adrSem); //Lit l'adresse du sémaphore système
+                Semaphore * sem = (Semaphore * ) adrSem;
+
+                sem->V();
+                break;
+            }
+
+            case SC_SemaphoreFree: {
+                DEBUG('a', "SempahoreV, initiated by user program.\n");
+                int userSem = machine->ReadRegister(4); //Adresse utilisateur
+
+                int adrSem;
+                machine->ReadMem(userSem,4,&adrSem); //Lit l'adresse du sémaphore système
+                Semaphore * sem = (Semaphore * ) adrSem;
+
+                delete sem; //On supprime le sémaphore
+                break;
+            }
+
             case SC_ForkExec: {
 
               int s =machine->ReadRegister(4);
@@ -200,14 +260,257 @@ ExceptionHandler (ExceptionType which)
               Thread *newThread = new Thread("Thread système");//Création de thread système
               newThread->Fork((VoidFunctionPtr)StartProcess,(int)buf);//Lancement du nouveau programme dans ce thread
               machine->WriteRegister(2, 0); // On écrit la valeur de retour
+              delete buf;
               currentThread->Yield();
               break;
             }
 
-            case SC_UserThreadJoin: {
-                DEBUG('a', "UserThreadJoin, initiated by user program.\n");
-                int idT = machine->ReadRegister(4);
-                do_UserThreadJoin(idT);
+            #ifdef FILESYS
+            case SC_UserMkdir: {
+                DEBUG('a', "UserMkdir, initiated by user program.\n");
+                int adr = machine->ReadRegister(4); //On récupère l'adresse de la chaine
+                char * buf = new char[MAX_STRING_SIZE];
+                machine->copyStringFromMachine(adr,buf,MAX_STRING_SIZE); //Récupère la chaine dans buf
+                bool ret = fileSystem->CreateDir(buf);
+                //Ecriture de la valeur de retour
+                if(ret){
+                  machine->WriteRegister(2, 0);
+                }else{
+                  machine->WriteRegister(2, 1);
+                }
+                delete buf; //On supprime le buffer
+                break;
+            }
+            case SC_UserChdir: {
+                DEBUG('a', "UserChdir, initiated by user program.\n");
+                int adr = machine->ReadRegister(4); //On récupère l'adresse de la chaine
+                char * buf = new char[MAX_STRING_SIZE];
+                machine->copyStringFromMachine(adr,buf,MAX_STRING_SIZE); //Récupère la chaine dans buf
+                bool ret = fileSystem->Move(buf);
+                if(ret){
+                  machine->WriteRegister(2, 0);
+                }else{
+                  machine->WriteRegister(2, 1);
+                }
+                delete buf; //On supprime le buffer
+                break;
+            }
+            case SC_UserRmdir: {
+                DEBUG('a', "UserRmdir, initiated by user program.\n");
+                int adr = machine->ReadRegister(4); //On récupère l'adresse de la chaine
+                char * buf = new char[MAX_STRING_SIZE];
+                machine->copyStringFromMachine(adr,buf,MAX_STRING_SIZE); //Récupère la chaine dans buf
+                bool ret = fileSystem->Remove(buf);
+                if(ret){
+                  machine->WriteRegister(2, 0);
+                }else{
+                  machine->WriteRegister(2, 1);
+                }
+                delete buf; //On supprime le buffer
+                break;
+            }
+            case SC_UserListdir: {
+                DEBUG('a', "UserListdir, initiated by user program.\n");
+                fileSystem->List ();
+                break;
+            }
+            case SC_UserMkFile: {
+                DEBUG('a', "UserMkFile, initiated by user program.\n");
+                int adr = machine->ReadRegister(4); //On récupère le premier argument
+                int size = machine->ReadRegister(5); //On récupère le deuxième argument
+
+                char * buf = new char[MAX_STRING_SIZE];
+                machine->copyStringFromMachine(adr,buf,MAX_STRING_SIZE); //Récupère la chaine dans buf
+                bool ret = fileSystem->CreateFile(buf,size);
+                //Ecriture de la valeur de retour
+                if(ret){
+                  machine->WriteRegister(2, 0);
+                }else{
+                  machine->WriteRegister(2, 1);
+                }
+                delete buf; //On supprime le buffer
+                break;
+            
+            }
+            case SC_UserRmFile: {
+                DEBUG('a', "UserRmFile, initiated by user program.\n");
+                int adr = machine->ReadRegister(4); //On récupère l'adresse de la chaine
+                char * buf = new char[MAX_STRING_SIZE];
+                machine->copyStringFromMachine(adr,buf,MAX_STRING_SIZE); //Récupère la chaine dans buf
+                bool ret = fileSystem->Remove(buf);
+                if(ret){
+                  machine->WriteRegister(2, 0);
+                }else{
+                  machine->WriteRegister(2, 1);
+                }
+                delete buf; //On supprime le buffer
+                break;
+            }
+            case SC_UserOpenFile: {
+                DEBUG('a', "UserOpenFile, initiated by user program.\n");
+                int adr = machine->ReadRegister(4); //On récupère l'adresse de la chaine
+                char * buf = new char[MAX_STRING_SIZE];
+                machine->copyStringFromMachine(adr,buf,MAX_STRING_SIZE); //Récupère la chaine dans buf
+                OpenFile * ret = fileSystem->Open(buf); //On ouvre le fichier
+                ret->GetHeader()->GenerateFd(); //On génère son descripteur
+                bool b = fileSystem->AddToFdTable(ret); //On l'ajoute à la table des fichiers
+                if(b){
+                  //currentThread->Open(ret);
+                  machine->WriteRegister(2, ret->GetHeader()->GetFd());
+                }else{
+                  machine->WriteRegister(2, -1);
+                }
+                delete buf; //On supprime le buffer
+                break;
+            }
+            case SC_UserCloseFile: {
+                DEBUG('a', "UserCloseFile, initiated by user program.\n");
+                int arg = machine->ReadRegister(4); //On récupère le fd à fermer
+                fileSystem->Close(arg);
+                //currentThread->Close(arg);
+                break;
+            }
+            #endif //filesys
+
+            case SC_SocketCreate: {
+                DEBUG('a', "SocketCreate, initiated by user program.\n");
+                int userSock = machine->ReadRegister(4); //Adresse utilisateur
+
+                SocketClientTCP * sock = new SocketClientTCP(); //Création de la socket système
+
+                machine->WriteMem(userSock,4,(int)sock); //Ecrit dans le coté utilisateur l'adresse de la socket système
+                machine->WriteMem(userSock+sizeof(int),1,1); //Type de la socket
+
+                break;
+            }
+
+            case SC_SocketServerCreate: {
+                DEBUG('a', "SocketServerCreate, initiated by user program.\n");
+                int userSock = machine->ReadRegister(4); //Adresse utilisateur
+                int port = machine->ReadRegister(5); //Port de la connexion
+
+                SocketServerTCP * sock = NULL;
+                try{
+                    sock = new SocketServerTCP(port);
+
+                }
+                catch(const std::exception& e)
+                {
+                    DEBUG('a', "SocketServerCreate, port already used\n");
+                }
+                machine->WriteMem(userSock,4,(int)sock); //Ecrit dans le coté utilisateur l'adresse de la socket système
+                machine->WriteMem(userSock+sizeof(int),1,2); //type de la socket
+
+                break;
+            }
+
+
+            case SC_SocketClose: {
+                DEBUG('a', "SocketClose, initiated by user program.\n");
+                int userSock = machine->ReadRegister(4); //Adresse utilisateur
+
+                int adrSock; int typeSocket;
+                machine->ReadMem(userSock,4,&adrSock); //Lit l'adresse de la socket système
+                machine->ReadMem(userSock+sizeof(int),1,&typeSocket); //Lit le type de la socket
+                if(typeSocket==1) {
+                    SocketClientTCP * sock = (SocketClientTCP *) adrSock;
+                    sock->Close();
+                }
+                else if(typeSocket==2) {
+                    SocketServerTCP * sock = (SocketServerTCP *) adrSock;
+                    sock->Close();
+                }
+
+  
+                break;
+            }
+
+            case SC_SocketSend: {
+                DEBUG('a', "SocketSend, initiated by user program.\n");
+                int userSock = machine->ReadRegister(4); //Adresse utilisateur
+                int dataUser = machine->ReadRegister(5); //Donnée à envoyer
+                int size = machine->ReadRegister(6); //Taille des données
+
+                int adrSock;
+                machine->ReadMem(userSock,4,&adrSock); //Lit l'adresse de la socket système
+                SocketClientTCP * sock = (SocketClientTCP *) adrSock;
+
+                char * data = new char[size]; //Les données à envoyer
+                machine->copyDataFromMachine(dataUser,data,size); //récupère les données depuis le programme utilisateur
+
+                int ret = sock->Write(data,size);
+                machine->WriteRegister(2,ret); //Le nombre d'octets écrits
+
+                delete data;
+                break;
+            }
+
+            case SC_SocketReceive: {
+                DEBUG('a', "SocketReceive, initiated by user program.\n");
+                int userSock = machine->ReadRegister(4); //Adresse utilisateur
+                int dataUser = machine->ReadRegister(5); //Pointeur des données où on doit stocker
+                int size = machine->ReadRegister(6); //Taille des données à recevoir
+
+                int adrSock;
+                machine->ReadMem(userSock,4,&adrSock); //Lit l'adresse de la socket système
+                SocketClientTCP * sock = (SocketClientTCP *) adrSock;
+
+                char * data = new char[size]; //Les données à recevoir
+
+                int ret = sock->Read(data,size);
+                machine->copyDataToMachine(data,dataUser,size); //Met les données dans le programme utilisateur
+
+
+                machine->WriteRegister(2,ret); //Le nombre d'octets lus
+
+                delete data;
+                break;
+            }
+
+            case SC_SocketAccept: {
+                DEBUG('a', "SocketAccept, initiated by user program.\n");
+                int userSock = machine->ReadRegister(4); //Adresse utilisateur
+                int userSockResponse = machine->ReadRegister(5); //Adresse utilisateur de la socket reponse
+
+
+                int adrSockServ;
+                machine->ReadMem(userSock,4,&adrSockServ); //Lit l'adresse de la socket système
+                SocketServerTCP * sock = (SocketServerTCP *) adrSockServ;
+
+                int adrSockResp;
+                machine->ReadMem(userSockResponse,4,&adrSockResp); //Lit l'adresse de la socket système
+                SocketClientTCP * sockClient = (SocketClientTCP *) adrSockResp;
+
+                sockClient = sock->Accept();
+                if(sockClient ==NULL) {
+                    DEBUG('a', "SocketAccept, failed return a null socket\n");
+                    machine->WriteRegister(2,0); //Accept fonctionne pas
+                }
+                else {
+                    machine->WriteMem(userSockResponse,4,(int)sockClient); //Ecrit dans le coté utilisateur l'adresse de la socket système
+                    machine->WriteMem(userSockResponse+sizeof(int),1,1); //Indique que c'est une socket utilisateur
+
+                    machine->WriteRegister(2,1); //Accept ok
+                }
+
+
+
+                break;
+            }
+
+            case SC_SocketConnect: {
+                DEBUG('a', "SocketConnect, initiated by user program.\n");
+                int userSock = machine->ReadRegister(4); //Adresse utilisateur
+                int adr = machine->ReadRegister(5); //Adresse du serveur
+                int port = machine->ReadRegister(6); //Port du serveur
+
+
+                int adrSock;
+                machine->ReadMem(userSock,4,&adrSock); //Lit l'adresse de la socket système
+                SocketClientTCP * sock = (SocketClientTCP *) adrSock;
+
+                int ret = sock->Connect(adr,port); //ret = 1 si la connection s'est bien passé, 0 si pas réussi à se connecter
+                machine->WriteRegister(2,ret);
                 break;
             }
 

@@ -45,7 +45,7 @@ static void StartUserThread(int f) {
 
 
 /*
-A la fin de la fonction le thread est bien initialisé grâce au sémaphore
+Toute les structures de données sont bien instanciées à la fin de la fonction
 */
 int do_UserThreadCreate(int f, int arg, int adrExit) {
     int idThread = -1;
@@ -100,4 +100,8 @@ void do_UserThreadExit() {
 
 void do_UserThreadJoin(int idT) {
     currentThread->space->JoinThread(idT);
+}
+
+void do_UserThreadKill() {
+    
 }

@@ -49,6 +49,9 @@ class Semaphore
     void P ();			// these are the only operations on a semaphore
     void V ();			// they are both *atomic*
 
+    //Return the semaphore value
+    int getValue();
+
   private:
     const char *name;		// useful for debugging
     int value;			// semaphore value, always >= 0
@@ -67,6 +70,9 @@ class Semaphore
 // may release it.  As with semaphores, you can't read the lock value
 // (because the value might change immediately after you read it).  
 
+
+enum LockState {BUSY,FREE};
+
 class Lock
 {
   public:
@@ -84,9 +90,14 @@ class Lock
     // holds this lock.  Useful for
     // checking in Release, and in
     // Condition variable ops below.
+    LockState getLockState();
 
   private:
     const char *name;		// for debugging
+    LockState state;
+    Thread * threadOwner;
+    List * listWaitingThreads;
+    int numberLock; //Nombre de fois que le thread a appelé Lock
     // plus some other stuff you'll need to define
 };
 
@@ -143,6 +154,8 @@ class Condition
 
   private:
     const char *name;
+    List * listWaitingThreads;
+
     // plus some other stuff you'll need to define
 };
 #endif // SYNCH_H
