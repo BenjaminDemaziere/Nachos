@@ -81,7 +81,6 @@ SynchList::Remove ()
 
     // ASSERT (item != NULL);
     lock->Release ();
-    printf("IN REMOVE %d\n",(int)item);
 
     return item;
 }

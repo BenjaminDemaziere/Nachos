@@ -333,8 +333,6 @@ ExceptionHandler (ExceptionType which)
                 char * data = new char[size]; //Les données à envoyer
                 machine->copyDataFromMachine(dataUser,data,size); //récupère les données depuis le programme utilisateur
 
-                printf("Taille:%d data:\"%s\"\n",size,data);
-
                 int ret = sock->Write(data,size);
                 machine->WriteRegister(2,ret); //Le nombre d'octets écrits
 

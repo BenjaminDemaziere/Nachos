@@ -20,13 +20,7 @@ int getFreePort() {
     return -1;
 }
 
-//Struct utilisé pour la réémission de paquet
-typedef struct DataPacket{
-    const char * data;
-    int size;
-    TypePacket type;
-    int numPacket;
-}DataPacket;
+
 
 
 //Fonction pour récupérer les données depuis le postOffice
@@ -37,26 +31,26 @@ void ReSendPacket(int arg) {
     void ** tabarg = (void**) arg;
     SocketClientTCP * sock = (SocketClientTCP *) (tabarg[1]);
     // DEBUG('r',"Resent Packet\n");
+    if(sock->connectionClosed==false) {
+        sock->lock->Acquire();
 
-    sock->lock->Acquire();
-
-    DataPacket  * d = (DataPacket *) (tabarg[0]);
-    sock->nbrResend ++;
-    sock->mailHeader.length = d->size;
-    sock->mailHeader.type = d->type;
-    sock->mailHeader.numPacket = d->numPacket;
-    sock->packetHeader.length = sizeof(MailHeader) + d->size;
-
-    postOffice->Send(sock->packetHeader, sock->mailHeader, d->data);
-    if(sock->nbrResend<MAXREEMISSIONS) {
-        interrupt->Schedule(ReSendPacket, arg, TEMPO ,TimerInt); //Relance le timer
+        DataPacket  * d = (DataPacket *) (tabarg[0]);
+        sock->nbrResend ++;
+        sock->mailHeader.length = d->size;
+        sock->mailHeader.type = d->type;
+        sock->mailHeader.numPacket = d->numPacket;
+        sock->packetHeader.length = sizeof(MailHeader) + d->size;
+        postOffice->Send(sock->packetHeader, sock->mailHeader, d->data);
+        if(sock->nbrResend<MAXREEMISSIONS) {
+            interrupt->Schedule(ReSendPacket, arg, TEMPO ,TimerInt); //Relance le timer
+        }
+        else {
+            sock->errorSend = true;
+            DEBUG('r',"Stop sending a packet, too much resend\n");
+            sock->semAck->V(); //Relache le verrou
+        }
+        sock->lock->Release();
     }
-    else {
-        sock->errorSend = true;
-        DEBUG('r',"Stop sending a packet, too much resend\n");
-        sock->semAck->V(); //Relache le verrou
-    }
-    sock->lock->Release();
 }
 
 //Fonction pour récupérer les données depuis le postOffice
@@ -105,6 +99,8 @@ SocketClientTCP::~SocketClientTCP() {
 int SocketClientTCP::Connect(NetworkAddress addrServer, int port) {
     DEBUG('r',"Call Connect\n");
 
+    lock->Acquire();
+
     portServer = port;
     //Définit les ports
     mailHeader.to = port;
@@ -116,31 +112,22 @@ int SocketClientTCP::Connect(NetworkAddress addrServer, int port) {
     mailHeader.length = 0;
     packetHeader.length = sizeof(mailHeader);
 
-    //Demande de connection
-    mailHeader.type = SYN;
-    postOffice->Send(packetHeader, mailHeader, NULL);
+
     //Attend l'accusé de réception
     DataPacket * d = new DataPacket;
     d->size = 0;
     d->data = 0;
     d->type = SYN;
-    void **arg = new void*[2];
-    arg[0] = (void*)d;
-    arg[1] = (void*)this;
-    //Lance le timer de renvoie du packet
 
-    interrupt->Schedule(ReSendPacket, int(arg), TEMPO ,TimerInt);
-    semAck->P(); //Attend l'accusé de réception (SYNACK) du serveur
-    //Modification implicite de mailHeader.to vers la nouvelle socket du serveur
-    //On a reçu l'acquittement du packet
-    //On détruit l'interruption 
+    SendPacket(d);
+    //Attend un synAck
 
-    interrupt->RemoveScheduledInterrupt(ReSendPacket, int(arg), TEMPO ,TimerInt);
-    delete arg;delete d;
+
     if(errorSend==true) {
         DEBUG('r',"Connect failure\n");
         return 0;
     }
+    lock->Release();
 
     //Envoie l'acceptation de la connection
     // dans le getPacket car on peut recevoir plusieurs fois SYNACK
@@ -157,9 +144,6 @@ int SocketClientTCP::Connect(NetworkAddress addrServer, int port) {
 int SocketClientTCP::Write(const char *data, int size) {
     lock->Acquire();
     DEBUG('r',"Call Write\n");
-    errorSend = false;
-
-
 
     int sizePacket = size > (int)MaxMailSize ? (int)MaxMailSize : size;
     int sizePacketTotal = 0;
@@ -184,36 +168,14 @@ int SocketClientTCP::Write(const char *data, int size) {
 
 //Envoie un paquet un packet
 void SocketClientTCP::Write1Packet(const char *data, int size) {
-    mailHeader.length = size;
-    mailHeader.type = DATA;
-    mailHeader.numPacket = numPacket;
-
-    packetHeader.length = sizeof(mailHeader) + size;
-    postOffice->Send(packetHeader, mailHeader, data);
-
     DataPacket * d = new DataPacket;
     d->size = size;
     d->data = data;
     d->type = DATA;
     d->numPacket = numPacket;
 
-    void **arg = new void*[2];
-    arg[0] = (void*)d;
-    arg[1] = (void*)this;
-    //Lance le timer de renvoie du packet
-    lock->Release();
-    interrupt->Schedule(ReSendPacket, int(arg), TEMPO ,TimerInt);
-    semAck->P(); //Attend l'accusé de réception
-    lock->Acquire();
+    SendPacket(d);
 
-
-    //On a reçu l'acquittement du packet
-    //On détruit l'interruption 
-    interrupt->RemoveScheduledInterrupt(ReSendPacket, int(arg), TEMPO ,TimerInt);
-    delete arg;delete d;
-
-    nbrResend=0; //Nombre de renvoie de paquets
-    numPacket++;
 }
 
 
@@ -246,14 +208,8 @@ int SocketClientTCP::Read(char *data, int size) {
 //Ferme la connexion
 void SocketClientTCP::Close() {
     lock->Acquire();
-    DEBUG('r',"Socket: close\n");
     if(connectionClosed==false) {
-        mailHeader.length = 0;
-        mailHeader.type = FIN;
-        mailHeader.numPacket = numPacket;
-
-        packetHeader.length = sizeof(mailHeader);
-        postOffice->Send(packetHeader, mailHeader, NULL);
+        DEBUG('r',"Socket: close\n");
 
         DataPacket * d = new DataPacket;
         d->size = 0;
@@ -261,26 +217,60 @@ void SocketClientTCP::Close() {
         d->type = FIN;
         d->numPacket = numPacket;
 
-        void **arg = new void*[2];
-        arg[0] = (void*)d;
-        arg[1] = (void*)this;
-        //Lance le timer de renvoie du packet
-        lock->Release();
-        interrupt->Schedule(ReSendPacket, int(arg), TEMPO ,TimerInt);
-        semFinAck->P(); //Attend l'accusé de réception (FINACK)
-        lock->Acquire();
+        //Envoye un paquet FIN
+        SendPacket(d);
 
-        lock->Release();
         DEBUG('r',"Socket: close finish\n");
     }
     else {
         DEBUG('r',"Socket: close finish, the connection was already closed by the other socket\n");
     }
+    lock->Release();
 
     delete this;
 }
 
+//Fonctionne interne d'envoie de paquet
+void SocketClientTCP::SendPacket(DataPacket * dataPacket) {
+    errorSend = false;
 
+    mailHeader.length = dataPacket->size;
+    mailHeader.type = dataPacket->type;
+    mailHeader.numPacket = dataPacket->numPacket;
+
+    packetHeader.length = sizeof(mailHeader);
+    postOffice->Send(packetHeader, mailHeader, dataPacket->data);
+
+    void **arg = new void*[2];
+    arg[0] = (void*)dataPacket;
+    arg[1] = (void*)this;
+    nbrResend=0; //Nombre de renvoie de paquets
+
+    //Lance le timer de renvoie du packet
+    lock->Release();
+    interrupt->Schedule(ReSendPacket, int(arg), TEMPO ,TimerInt);
+
+    if (dataPacket->type == FIN) {
+        semFinAck->P();
+    }
+    else {
+        semAck->P();
+    }
+
+    lock->Acquire();
+    interrupt->RemoveScheduledInterrupt(ReSendPacket, int(arg), TEMPO ,TimerInt);
+    numPacket++;
+
+    delete arg;delete dataPacket;
+}
+
+void HelpClose(int arg) {
+    SocketClientTCP * sock = (SocketClientTCP *)arg;
+    DEBUG('r',"HelpClose\n");
+    sock->connectionClosed = true;
+    sock->messages->StopRemove();
+
+}
 
 //Méthode interne qui récupère les paquets depuis le postOffice et met les messages de données dans la liste
 //Elle s'occupe aussi d'alerter write qu'un acquittement a eu lieu
@@ -304,23 +294,27 @@ void SocketClientTCP::GetPacket() {
         }
         else if(mailHdr.type==SYNACK) {
             lock->Acquire();
+            DEBUG('r',"Receive SYNACK\n");
 
-            //Le serveur nous donne le port de la socket qu'il vient d'ouvrir
-            //Il faut donc mettre le port vers lequel on envoie les données
-
-            if(synAckReceived==0) {//C'est le premier SYNACK qu'on reçoit
+            if(mailHdr.numPacket == numPacketReceived) {  //Si c'est le paquet à recevoir
+                //Le serveur nous donne le port de la socket qu'il vient d'ouvrir
+                //Il faut donc mettre le port vers lequel on envoie les données
                 semAck->V();
-                synAckReceived=1;
+                numPacketReceived++;
+            }
+            else {
+                DEBUG('r',"Paquet doublon FIN\n");
             }
             mailHeader.type = ACK;
             mailHeader.to = portServer;
 
             postOffice->Send(packetHeader, mailHeader, &dummy);
             mailHeader.to = mailHdr.from; //Le port de la socket client du serveur
-
             lock->Release();
         }
         else if(mailHdr.type==FINACK) {
+            DEBUG('r',"Receive FINACK\n");
+
             lock->Acquire();
             //Reçoit aquittement de fin de connection
             semFinAck->V();
@@ -332,6 +326,15 @@ void SocketClientTCP::GetPacket() {
         else if(mailHdr.type==FIN) {
             lock->Acquire();
             DEBUG('r',"Receive FIN\n");
+            if(mailHdr.numPacket == numPacketReceived) {  //Si c'est le paquet à recevoir
+                //Dès qu'on est sûr de ne plus recevoir 
+                interrupt->Schedule(HelpClose,(int)this,TEMPO*4,TimerInt);
+                numPacketReceived++;
+            }
+            else {
+                interrupt->RemoveScheduledInterrupt(HelpClose, (int)this, TEMPO*4 ,TimerInt);
+                interrupt->Schedule(HelpClose,(int)this,TEMPO*4,TimerInt);
+            }
             //Envoie un acquittement de fin de connection
             mailHdr.length = 0;
             mailHdr.type = FINACK;
@@ -341,24 +344,16 @@ void SocketClientTCP::GetPacket() {
             pktHdr.from = packetHeader.from;
             packetHeader.length = sizeof(mailHdr);
             postOffice->Send(pktHdr, mailHdr, &dummy);
-
-            //La connection est fermée 
-            connectionClosed = true;
-            messages->StopRemove(); //Débloque l'appel sur le Read
-
             lock->Release();
         }
         else if(mailHdr.type==DATA) { //Met les données et la taille dans la liste de message
-
-            if(mailHdr.numPacket == numPacketReceived) { 
-
+            if(mailHdr.numPacket == numPacketReceived) {  //Si c'est le paquet à recevoir
                 DataPacket * d = new DataPacket();
                 d->data = data;
                 d->size = mailHdr.length;
                 messages->Append(d);
                 numPacketReceived++;
-                DEBUG('r',"Paquet reçu\n");
-
+                DEBUG('r',"Paquet data reçu\n");
             }
             else {
                 DEBUG('r',"Paquet doublon reçu et jeté\n");
@@ -404,8 +399,10 @@ void ReSendPacketServer(int arg) {
 }
 
 SocketServerTCP::SocketServerTCP(int portS) {
-    semAck = new Semaphore("Socket sem Ack",0);
-    semSyn = new Semaphore("Socket sem Syn",0);
+    semAck = new Semaphore("SocketServer sem Ack",0);
+    semSyn = new Semaphore("SocketServer sem Syn",0);
+    inAccept = false;
+
     threadGetPacket=NULL;
     //Regarde si le port est valide
     port = portS;
@@ -448,9 +445,15 @@ SocketClientTCP * SocketServerTCP::Accept() {
         Attente de demande de connection du client (SYN)
     */
     semSyn->P();
+    inAccept=true;
+
+    
 
     //On crée la socket
     SocketClientTCP * socketClient = new SocketClientTCP;
+    socketClient->numPacketReceived = 1; //On doit recevoir le packet 1
+    socketClient->numPacket = 1;
+
     //On configure la socket avec les bons port et adresse
     //Le port local est déjà configuré à la création de la socket
     socketClient->mailHeader.to = mailHeader.to;
@@ -485,11 +488,8 @@ SocketClientTCP * SocketServerTCP::Accept() {
 
     mailHeader.from = port; //remet le bon port
 
-
-
-
-
     DEBUG('r',"Accept Success");
+    inAccept=false;
 
     return socketClient;
     //La connection est ouverte
@@ -517,11 +517,12 @@ void SocketServerTCP::GetPacket() {
         }
         else if(mailHdr.type==SYN) {
             DEBUG('r',"Server receive SYN\n");
-
-            //port et adresse du client
-            mailHeader.to = mailHdr.from;
-            packetHeader.to = pktHdr.from;
-            semSyn->V();
+            if(inAccept==false) {
+                //port et adresse du client
+                mailHeader.to = mailHdr.from;
+                packetHeader.to = pktHdr.from;
+                semSyn->V();
+            }
         }
         else { //Ne devrait pas arriver
             DEBUG('r',"Server, Unknow packet\n");

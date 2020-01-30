@@ -17,6 +17,8 @@ Le serveur et le client peuvent instancier la fermeture
 Fermeture de connexion (simplifiée):
 M1: "Close", envoie Fin
 M2: reçoit Fin, envoie FinAck
+M1: reçoit FinAck, envoie Ack
+M2: reçoit Ack
 ->La connexion est fermée
 M1 ne peut plus lire ni écrire,
 M2 peut encore lire les paquets restants mais ne peut pas écrire

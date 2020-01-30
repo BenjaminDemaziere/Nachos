@@ -12,9 +12,15 @@
 
 
 #define TEMPO 10000 //Temps de réémission en temps horloge
-#define MAXREEMISSIONS 1000 //Nombre de réémission max d'un paquet en tcp
+#define MAXREEMISSIONS 100 //Nombre de réémission max d'un paquet en tcp
 
-
+//Struct utilisé pour la réémission de paquet
+typedef struct DataPacket{
+    const char * data;
+    int size;
+    TypePacket type;
+    int numPacket;
+}DataPacket;
 
 //Renvoie un port(mailbox) non utilisé
 //-1 si aucun disponible
@@ -49,6 +55,8 @@ class SocketClientTCP  {
         //Fonction interne qui récupère les paquets depuis le post office
         void GetPacket();
 
+        //Fonction interne d'envoie de paquet
+        void SendPacket(DataPacket * dataPacket);
 
         Semaphore * semSend; //Sémaphore d'attente d'envoie de données 
         Semaphore * semAck; //Sémaphore d'attente de reception d'un acquittement
@@ -88,7 +96,10 @@ class SocketServerTCP  {
         //Méthode interne
         void GetPacket();
 
-        int port;
+        int port; //port du serveur
+
+        bool inAccept; //True si le serveur est en train de gérer une demande de connection
+        //On interdit les autres demandes pendant ce temps la (leurs demandes sont jetées)
 
         Thread * threadGetPacket;
         Semaphore * semAck;
