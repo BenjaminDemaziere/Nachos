@@ -78,64 +78,21 @@ void sendReceive(int farAddr) {
 }
 
 
-
-// int i;
-// void p(int dummy) {
-//     i++;
-//     if(i%100000==0) {
-//         printf("Interruption\n");
-//     }
-// }
-
+//Test de base
 void
 MailTest(int farAddr)
 {
 
-    // for(int i=0;i<10;i++)
-    //     sendReceive(farAddr);
-    // // Timer * t = new Timer(p,(int)t,0);
-    // // interrupt->SetLevel(IntOff);
-    // // currentThread->Sleep();
-
-    // if(farAddr==0) {
-    //     printf("0000\n");
-
-    //     SocketClientTCP * s = new SocketClientTCP();
-    //     s->mailHeader.to = 0;
-    //     s->mailHeader.from = 0;
-    //     s->packetHeader.to = 0;
-    //     s->packetHeader.from = 1;
+    for(int i=0;i<10;i++)
+        sendReceive(farAddr);
+}
 
 
-    //     const char * buf = "PTDR\n";
-
-    //     for(int i=0;i<10;i++) {
-    //         s->Write(buf,6);
-    //         printf("Envoie\n");
-    //     }
-
-    // }
-    // else if(farAddr==1) {
-    //     printf("1111\n");
-
-    //     SocketClientTCP * s = new SocketClientTCP();
-    //     s->portSrc = 0;
-    //     s->mailHeader.to = 0;
-    //     s->mailHeader.from = 0;
-    //     s->packetHeader.to = 1;
-    //     s->packetHeader.from = 0;
-
-    //     char t[200];
-    //     for(int i=0;i<10;i++) {
-    //         s->Read(t,6);
-
-    //         printf("%s",t);
-    //     }
-
-    // }
-
-
-
+void MailTest2(int farAddr)
+{
+    /*
+        Test des sockets
+    */
 
     if(farAddr==0) {
         printf("Client\n");
@@ -146,9 +103,9 @@ MailTest(int farAddr)
             printf("Connect\n");
 
 
-            const char * buf = "PTDR T QUI BRO\n";
+            const char * buf = "Bonjour\n";
             for(int i=0;i<10;i++) {
-                s->Write(buf,16);
+                s->Write(buf,9);
             }
 
             s->Close();
@@ -161,7 +118,6 @@ MailTest(int farAddr)
     //Le serveur est à l'adresse 0
     else if(farAddr==1) {
         printf("Serveur\n");
-            SocketServerTCP * sserveur = new SocketServerTCP(2);
             SocketServerTCP * serveur = NULL;
 
         try{
@@ -181,12 +137,7 @@ MailTest(int farAddr)
             printf("Erreur port déjà utilisé: %d\n",(int)serveur);
         }
         
-
-
-
     }
-
-
 
 
 
