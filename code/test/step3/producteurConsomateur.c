@@ -19,9 +19,9 @@ int nbElement=0;
 void produire() {
     SemaphoreP(&plein); //Si plein attend
     SemaphoreP(&sem);
-    
+
     nbElement++;
-    PutString("Je produis\n");
+    PutString("Je produis. Nbelem =");PutInt(nbElement);PutChar('\n');
 
     SemaphoreV(&sem);
     SemaphoreV(&vide);
@@ -34,8 +34,7 @@ void consommer() {
     SemaphoreV(&sem);
 
     nbElement--;
-    PutString("Je consomme\n");
-
+    PutString("Je consomme. Nbelem =");PutInt(nbElement);PutChar('\n');
 
     SemaphoreV(&sem);
     SemaphoreV(&plein); //Enlève à plein
@@ -78,9 +77,9 @@ int main ()
     t4=UserThreadCreate(producteur,0);
 
     UserThreadJoin(t1);
-    UserThreadJoin(t2);    
-    UserThreadJoin(t3);    
-    UserThreadJoin(t4);    
+    UserThreadJoin(t2);
+    UserThreadJoin(t3);
+    UserThreadJoin(t4);
 
     SemaphoreFree(&sem);
     SemaphoreFree(&vide);
@@ -90,4 +89,3 @@ int main ()
 
     return 1;
 }
-
