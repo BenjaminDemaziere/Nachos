@@ -15,7 +15,8 @@ void handler(void * arg) {
 
     int ret=1;
     char data[30];
-    for(int i=0;i<10;i++) {
+    int i;
+    for(i=0;i<10;i++) {
         ret = SocketReceive(client,data,30);
         if (ret!=0) PutString(data);
     }
@@ -25,7 +26,8 @@ void handler(void * arg) {
     data[0]=data[1]=data[2];
     data[3]='\n';
     data[4]='\0';
-    for(int i=0;i<5;i++) {
+
+    for(i=0;i<5;i++) {
         data[1]+=1;
         SocketSend(client,data,5);
     }
@@ -43,14 +45,14 @@ int main() {
 
     socket_t tab[3];
     int tabT[3];
-
-
-    for(int j=0;j<3;j++) {
+    int j;
+    
+    for(j=0;j<3;j++) {
         PutString("Attend connection\n");
         SocketAccept(&serveur,&(tab[j]));
         tabT[j]=UserThreadCreate(handler,(void *)(&(tab[j])));
     }
-    for(int j=0;j<3;j++) {
+    for(j=0;j<3;j++) {
         UserThreadJoin(tabT[j]);
     }
 
