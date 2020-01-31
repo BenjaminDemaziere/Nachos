@@ -16,8 +16,9 @@ int main() {
 
 
     int ret=1;
+    int i;
     char data[30];
-    for(int i=0;i<10;i++) {
+    for(i=0;i<10;i++) {
         ret = SocketReceive(&client,data,30);
         if (ret!=0) PutString(data);
     }
@@ -25,7 +26,7 @@ int main() {
     data[0]=data[1]=data[2];
     data[3]='\n';
     data[4]='\0';
-    for(int i=0;i<5;i++) {
+    for(i=0;i<5;i++) {
         data[1]+=1;
         SocketSend(&client,data,5);
     }
