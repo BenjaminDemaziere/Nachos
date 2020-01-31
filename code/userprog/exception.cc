@@ -260,7 +260,7 @@ ExceptionHandler (ExceptionType which)
               Thread *newThread = new Thread("Thread système");//Création de thread système
               newThread->Fork((VoidFunctionPtr)StartProcess,(int)buf);//Lancement du nouveau programme dans ce thread
               machine->WriteRegister(2, 0); // On écrit la valeur de retour
-              delete buf;
+            //   delete buf; //Il faudrait supprimer le buffer!
               currentThread->Yield();
               break;
             }
