@@ -175,9 +175,7 @@ void PutChar(char c);
 */
 void PutString(char * c);
 
-
 char GetChar();
-
 
 char * GetString();
 
